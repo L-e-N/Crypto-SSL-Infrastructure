@@ -4,7 +4,7 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 
-class PaireClesRSA():
+class PaireClesRSA:
 
     def __init__(self):
         # generate key pair

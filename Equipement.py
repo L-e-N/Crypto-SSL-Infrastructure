@@ -1,5 +1,5 @@
-from PaireClesRSA import *
-from Certificat import Certificat
+import PaireClesRSA
+
 
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
@@ -11,8 +11,10 @@ from cryptography.hazmat.backends import default_backend
 from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
+from Certificat import Certificat
 
-class Equipment():
+
+class Equipment:
 
     def __init__(self, name, port = 80, validity_days = 10):
         self.validity_days = validity_days

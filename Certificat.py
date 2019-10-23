@@ -1,10 +1,13 @@
-from PaireClesRSA import *
-from Equipement import Equipment
+import datetime
 
-class Certificat():
+from cryptography.hazmat.backends.openssl import x509
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.x509 import NameOID
+
+
+class Certificat:
 
     def __init__(self, name, keypair, validity_days):
-
         # auto certify
         subject = issuer = x509.Name([
             x509.NameAttribute(NameOID.COMMON_NAME, name),
@@ -27,7 +30,6 @@ class Certificat():
             # Sign our certificate with our private key
         ).sign(keypair.private(), hashes.SHA256())
 
-        print(cert.public_bytes(serialization.Encoding.PEM))
 
     def verif_certif(self, pubkey):
         try:
@@ -42,4 +44,5 @@ class Certificat():
             return False
 
 
-p = PaireClesRSA()
+#cert = Certificat('name',)
+#        print(cert.public_bytes(serialization.Encoding.PEM))

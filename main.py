@@ -1,6 +1,6 @@
-from PaireClesRSA import *
-import Equipement
-import Certificat
+from PaireClesRSA import PaireClesRSA
+from Equipement import Equipment
+from Certificat import Certificat
 
 
 def create_equipment():
@@ -13,8 +13,10 @@ def create_equipment():
 
 
 def test():
-    pk1 = PaireClesRSA()
-    pk2 = PaireClesRSA()
-    return (pk1, pk2)
+    pk = PaireClesRSA()
+    print(pk)
 
 
+
+
+print(test())
