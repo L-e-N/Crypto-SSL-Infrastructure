@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa
 
 from Certificat import Certificat
+from create_socket import *
 
 
 class Equipment:
@@ -22,6 +23,10 @@ class Equipment:
         self.myport = port
         self.mykey = PaireClesRSA()
         self.mycert = Certificat(self.myname, self.mykey.public(),self.mykey.private(), self.validity_days)
+
+        ''' When we create an equipment, we start a thread that opens a server socket to listen to others '''
+        self.thread_server = threading.Thread(target=open_socket_server, args=(self, 'localhost', port))
+        self.thread_server.start()
 
     def affichage_da(self):
         print()
@@ -41,6 +46,20 @@ class Equipment:
 
     def mycert(self):
         return self.mycert
+
+    def certify(self, other_equipment):
+        cert = Certificat(self.myname, other_equipment.mykey.public(), self.mykey.private(), 10)
+        return cert
+
+    def connect_to_equipment(self, equipment):
+        """ Start a thread that open a client socket connected to the server socket of another equipement """
+        """ We should use different open_socket_client to have a different behaviour for what we want to ask to the other equipment (add, sync..) """
+        y = threading.Thread(target=open_socket_client, args=(self, 'localhost', equipment.myport))
+        y.start()
+        y.join()
+
+
+
 
 
 
