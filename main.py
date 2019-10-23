@@ -1,5 +1,7 @@
+from cryptography.hazmat.primitives import serialization
+
 from PaireClesRSA import PaireClesRSA
-from Equipement import Equipment
+from Equipement import *
 from Certificat import Certificat
 
 
@@ -13,10 +15,9 @@ def create_equipment():
 
 
 def test():
-    pk = PaireClesRSA()
-    print(pk)
+    e = Equipment('myequipment', 80)
+    e.affichage()
+    print(e.mycert.verif_certif(e.mykey.public()))
 
 
-
-
-print(test())
+test()

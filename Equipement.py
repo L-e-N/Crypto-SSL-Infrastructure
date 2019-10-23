@@ -1,4 +1,4 @@
-import PaireClesRSA
+from PaireClesRSA import PaireClesRSA
 
 
 from cryptography.hazmat.primitives import serialization
@@ -21,7 +21,7 @@ class Equipment:
         self.myname = name
         self.myport = port
         self.mykey = PaireClesRSA()
-        self.mycert = Certificat(self.name, self.keypair, self.validity_days)
+        self.mycert = Certificat(self.myname, self.mykey.public(),self.mykey.private(), self.validity_days)
 
     def affichage_da(self):
         print()
@@ -30,7 +30,8 @@ class Equipment:
         print()
 
     def affichage(self):
-        print("Equipment name: ", self.myname(), "Equipment port :", self.myport)
+        print("Equipment name: ", self.myname, "Equipment port :", self.myport)
+        print(self.mycert.x509.public_bytes(serialization.Encoding.PEM))
 
     def myname(self):
         return self.myname

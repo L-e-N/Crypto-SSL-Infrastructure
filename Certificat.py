@@ -1,23 +1,23 @@
 import datetime
-
-from cryptography.hazmat.backends.openssl import x509
-from cryptography.hazmat.primitives import hashes, serialization
-from cryptography.x509 import NameOID
-
+from cryptography import x509
+from cryptography.x509.oid import NameOID
+from cryptography.hazmat.primitives import hashes
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives.asymmetric import padding
 
 class Certificat:
 
-    def __init__(self, name, keypair, validity_days):
+    def __init__(self, name, pubkey, prikey, validity_days):
         # auto certify
         subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, name),
+            x509.NameAttribute(NameOID.COMMON_NAME, name)
         ])
         self.x509 = x509.CertificateBuilder().subject_name(
             subject
         ).issuer_name(
             issuer
         ).public_key(
-            keypair.public()
+            pubkey
         ).serial_number(
             x509.random_serial_number()
         ).not_valid_before(
@@ -28,21 +28,16 @@ class Certificat:
             x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
             critical=False,
             # Sign our certificate with our private key
-        ).sign(keypair.private(), hashes.SHA256())
-
+        ).sign(prikey, hashes.SHA256(), default_backend())
 
     def verif_certif(self, pubkey):
         try:
             pubkey.verify(
-                self.cert.signature,
-                self.cert.tbs_certificate_bytes,
+                self.x509.signature,
+                self.x509.tbs_certificate_bytes,
                 padding.PKCS1v15(),
-                cert_to_check.signature_hash_algorithm,
+                self.x509.signature_hash_algorithm,
             )
             return True
         except ValueError:
             return False
-
-
-#cert = Certificat('name',)
-#        print(cert.public_bytes(serialization.Encoding.PEM))
