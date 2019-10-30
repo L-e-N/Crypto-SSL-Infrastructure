@@ -2,8 +2,9 @@ import socket
 import threading
 import time
 
-
 """ TODO: Add different behaviour according to what the server receive """
+
+
 def open_socket_server(equipment, hote, port):
     socker_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     socker_server.bind((hote, port))
@@ -39,13 +40,12 @@ def open_socket_client(equipment, hote, port):
         msg_recu = socket_client.recv(1024)
         print(msg_recu.decode())  # Là encore, peut planter s'il y a des accents
     '''
-    echange_certificat_client(socket_client)
+    echange_certificat_client(socket_client, equipment.mypubkey())
     print("Fermeture de la connexion client")
     socket_client.close()
 
 
-def echange_certificat_client(socket_client):
-    msg = "Salut"
+def echange_certificat_client(socket_client, msg="Default Message"):
     msg = msg.encode()
     socket_client.send(msg)
 
@@ -57,10 +57,13 @@ def echange_certificat_server(socket_client):
     msg_recu = msg_recu.decode()
     print(('Mesage reçu: %s' % msg_recu))
 
+
 def thread_func(name):
     print("Thread %s: Hello" % name)
     time.sleep(2)
     print("Thread %s: Close this thread" % name)
+
+
 
 
 def test():
