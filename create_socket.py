@@ -2,60 +2,121 @@ import socket
 import threading
 import time
 
+from Certificat import Certificat
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
+
 """ TODO: Add different behaviour according to what the server receive """
 
 
-def open_socket_server(equipment, hote, port):
-    socker_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socker_server.bind((hote, port))
-    socker_server.listen(5)
+def open_socket_server(equipment_server, hote):
+    socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket_server.bind((hote, equipment_server.port))
+    socket_server.listen(5)
 
-    print("Le serveur écoute à présent sur le port {}".format(port))
+    print("Le serveur écoute à présent sur le port {}".format(equipment_server.port))
 
-    socket_client, infos_connexion = socker_server.accept()
-    '''
-    msg_recu = b""
-    while msg_recu != b"fin":
-        msg_recu = socket_client.recv(1024)
-        print(msg_recu.decode())
-        socket_client.send(b"5 / 5")
-    print("Fermeture de la connexion")
-    '''
-    echange_certificat_server(socket_client)
-    print("Fermeture de la connexion server de l'équipement: %s" % equipment.myname)
-    socket_client.close()
-    socker_server.close()
+    socket_client, infos_connexion = socket_server.accept()
+    mode_recu = socket_client.recv(1024).decode()
+    if mode_recu.startswith("Certificate exchange"):
+        client_name = mode_recu.split()[-1]
+        if not confirm(equipment_server.name, client_name): return "Not connecting equipments"
+
+        socket_client.send(equipment_server.name.encode())
+        # waiting for client to say that he received the name
+        socket_client.recv(1024)
+        # send key to client
+        socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
+
+        #recv_pub_key(socket_client)
+        recv_pem_cert = socket_client.recv(1024)
+        print("Received cert ", recv_pem_cert)
+        recv_cert = Certificat(recv_pem_cert)
+
+        socket_client.send("Received cert".encode())
+
+        client_pub_key = socket_client.recv(1024)
+        print("Received key ", client_pub_key)
+        client_pub_key = load_pem_public_key(client_pub_key, backend=default_backend())
+
+        if not recv_cert.verif_certif(client_pub_key): print("Could not verify certificate received by ", equipment_server.name)
+        else:
+            print("Certificate from client verified")
+            equipment_server.add_ca(client_name, equipment_server.name, recv_cert, client_pub_key)
+            equipment_server.affichage_ca()
+
+        sent_cert = equipment_server.certify(client_pub_key)
+        socket_client.send(serialize_cert_to_pem(sent_cert))
+
+        print("Fermeture de la connexion server de l'équipement: %s" % equipment_server.name)
+        socket_client.close()
+        socket_server.close()
 
 
-def open_socket_client(equipment, hote, port):
+def open_socket_client(equipment_client, hote, equipment_server):
+    if not confirm(equipment_client.name, equipment_server.name): return "Not connecting equipments"
     socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    socket_client.connect((hote, port))
-    print("Connexion établie avec le serveur sur le port {}".format(port))
+    socket_client.connect((hote, equipment_server.port))
+    print("Connexion établie avec le serveur sur le port {}".format(equipment_server.port))
+    mode = "Certificate exchange request from " + equipment_client.name
+    mode = mode.encode()
+    socket_client.send(mode)
 
-    '''msg_a_envoyer = b""
-    while msg_a_envoyer != b"fin":
-        msg_a_envoyer = input("> ")
-        msg_a_envoyer = msg_a_envoyer.encode() # encore un str en byte
-        socket_client.send(msg_a_envoyer)
-        msg_recu = socket_client.recv(1024)
-        print(msg_recu.decode())  # Là encore, peut planter s'il y a des accents
-    '''
-    echange_certificat_client(socket_client, equipment.mypubkey())
+    server_name = socket_client.recv(1024).decode()
+
+    msg = "Establishing connection between " + equipment_client.name + " and " + server_name
+    socket_client.send(msg.encode())
+
+    server_pub_key = recv_pub_key(socket_client)
+    cert = equipment_client.certify(server_pub_key)
+    socket_client.send(serialize_cert_to_pem(cert))
+
+    socket_client.recv(1024)
+
+    socket_client.send(serialize_key_to_pem(equipment_client.pub_key()))
+
+    recv_pem_cert = socket_client.recv(1024)
+    recv_cert = Certificat(recv_pem_cert)
+    if not recv_cert.verif_certif(server_pub_key): print("Could not verify certificate received by ", equipment_client.name)
+    else:
+        print("Certificate from server verified")
+        equipment_client.add_ca(server_name, equipment_client.name, recv_cert, server_pub_key)
+        equipment_client.affichage_ca()
+    # socket_client.send(serialize_to_pem(equipment_client.pub_key()))
     print("Fermeture de la connexion client")
     socket_client.close()
 
 
-def echange_certificat_client(socket_client, msg="Default Message"):
-    msg = msg.encode()
-    socket_client.send(msg)
+def serialize_key_to_pem(object):
+    # msg = msg.encode() does not work for public keys
+    try:
+        pem = object.public_bytes(
+            encoding=serialization.Encoding.PEM,
+            format=serialization.PublicFormat.SubjectPublicKeyInfo)
+    except ValueError:
+        print("The key could not be converted to PEM")
+    return pem
 
-    # Convert certificate to bytecode to be able to send it! (socket.send())
+
+def serialize_cert_to_pem(object):
+    # msg = msg.encode() does not work for public keys
+    try:
+        pem = object.x509.public_bytes(serialization.Encoding.PEM)
+    except ValueError:
+        print("The cert could not be converted to PEM")
+    return pem
 
 
-def echange_certificat_server(socket_client):
+# Convert certificate to bytecode to be able to send it! (socket.send())
+
+
+def recv_pub_key(socket_client):
     msg_recu = socket_client.recv(1024)
-    msg_recu = msg_recu.decode()
+    msg_recu = load_pem_public_key(msg_recu, backend=default_backend())
     print(('Mesage reçu: %s' % msg_recu))
+    return msg_recu
 
 
 def thread_func(name):
@@ -64,6 +125,12 @@ def thread_func(name):
     print("Thread %s: Close this thread" % name)
 
 
+def confirm(stra, strb):
+    answer = ""
+    while answer not in ["y", "n"]:
+        print("Connect equipment", stra, " to new equipment", strb)
+        answer = input("[Y/N]? ").lower()
+    return answer == "y"
 
 
 def test():

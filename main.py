@@ -13,15 +13,17 @@ def test():
     cert = e1.certify(e2)
     print(cert.x509.public_bytes(serialization.Encoding.PEM))
 
-    v1 = cert.verif_certif(e1.mykey.public())
-    v2 = cert.verif_certif(e2.mykey.public())
+    v1 = cert.verif_certif(e1.keypair.public())
+    v2 = cert.verif_certif(e2.keypair.public())
     print("Verification of cert by e1", v1)
     print("Verification of cert by e2", v2)
 
+
 def test_socket():
-    e1 = Equipment('a', 12500)
-    e2 = Equipment('a', 12501)
-    time.sleep(2)
+    e1 = Equipment('old', 12600)
+    e2 = Equipment('new', 12601)
+    print("Equipments created")
+    time.sleep(1)
     e2.connect_to_equipment(e1)
 
 

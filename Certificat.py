@@ -7,8 +7,13 @@ from cryptography.hazmat.primitives.asymmetric import padding
 
 class Certificat:
 
-    def __init__(self, name, pubkey, prikey, validity_days):
-        # auto certify
+    def __init__(self, pem=None):
+        if pem:
+            self.x509 = x509.load_pem_x509_certificate(pem, default_backend())
+        else:
+            self.x509 = None
+    
+    def create_cert(self, name, pub_key, pri_key, validity_days=10):
         subject = issuer = x509.Name([
             x509.NameAttribute(NameOID.COMMON_NAME, name)
         ])
@@ -17,7 +22,7 @@ class Certificat:
         ).issuer_name(
             issuer
         ).public_key(
-            pubkey
+            pub_key
         ).serial_number(
             x509.random_serial_number()
         ).not_valid_before(
@@ -28,11 +33,12 @@ class Certificat:
             x509.SubjectAlternativeName([x509.DNSName(u"localhost")]),
             critical=False,
             # Sign our certificate with our private key
-        ).sign(prikey, hashes.SHA256(), default_backend())
+        ).sign(pri_key, hashes.SHA256(), default_backend())
 
-    def verif_certif(self, pubkey):
+
+    def verif_certif(self, pub_key):
         try:
-            pubkey.verify(
+            pub_key.verify(
                 self.x509.signature,
                 self.x509.tbs_certificate_bytes,
                 padding.PKCS1v15(),
