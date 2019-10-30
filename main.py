@@ -2,6 +2,7 @@ from cryptography.hazmat.primitives import serialization
 
 from PaireClesRSA import PaireClesRSA
 from Equipement import *
+from create_socket import *
 from Certificat import Certificat
 
 
@@ -20,12 +21,53 @@ def test():
 
 
 def test_socket():
-    e1 = Equipment('old', 12600)
-    e2 = Equipment('new', 12601)
-    print("Equipments created")
-    time.sleep(1)
-    e2.connect_to_equipment(e1)
 
+    # List of equipments in the network
+    network = []
+
+    # Already create an equipement for test
+    new_equipment = Equipment("Dang", 12500)
+    network.append(new_equipment)
+
+    # HELP displaying the list of the available commands
+    command_list = [
+        'List of the available commands:'
+        'create a new equipement: create equipment',
+        'display the network: display network'
+    ]
+    for command in command_list:
+        print(command)
+
+    # User input to do a command
+    command = ""
+    while command != "end":
+        print('Type a command:')
+        command = input("> ")
+
+        if command == "create equipment":
+            print('Type the ID of the new equipement')
+            id = input("> ")
+            print('Type the port of the new equipement')
+            port = input("> ")
+            new_equipment = Equipment(id, int(port))
+            network.append(new_equipment)
+            print('New equipement created with id %s and port %s' % (id, port))
+
+        elif command == "display network":
+            print(network)
+
+            # à ajouter dans la classe Equipement
+            """def __str__(self):
+                return "(ID: %s, port: %d)" % (self.name, self.port)
+
+            def __repr__(self):
+                return self.__str__()"""
+
+    for equipment in network:
+        # To close all listening sockets in equipement server thread, you can open a connection to these sockets and tell them to close.
+        y = threading.Thread(target=open_close_socket_client, args=('localhost', equipment))
+        y.start()
+        y.join()
 
 """
 Problèmes:

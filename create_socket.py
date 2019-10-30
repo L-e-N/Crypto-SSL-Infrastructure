@@ -19,40 +19,46 @@ def open_socket_server(equipment_server, hote):
     print("Le serveur écoute à présent sur le port {}".format(equipment_server.port))
 
     socket_client, infos_connexion = socket_server.accept()
-    mode_recu = socket_client.recv(1024).decode()
-    if mode_recu.startswith("Certificate exchange"):
-        client_name = mode_recu.split()[-1]
-        if not confirm(equipment_server.name, client_name): return "Not connecting equipments"
 
-        socket_client.send(equipment_server.name.encode())
-        # waiting for client to say that he received the name
-        socket_client.recv(1024)
-        # send key to client
-        socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
+    mode_recu = b""
+    while mode_recu != b"end":
+        print("Attente d'un message")
+        mode_recu = socket_client.recv(1024)
+        mode_recu = mode_recu.decode()
+        print("Mode reçu %s" % mode_recu)
+        if mode_recu.startswith("Certificate exchange"):
+            client_name = mode_recu.split()[-1]
+            if not confirm(equipment_server.name, client_name): return "Not connecting equipments"
 
-        #recv_pub_key(socket_client)
-        recv_pem_cert = socket_client.recv(1024)
-        print("Received cert ", recv_pem_cert)
-        recv_cert = Certificat(recv_pem_cert)
+            socket_client.send(equipment_server.name.encode())
+            # waiting for client to say that he received the name
+            socket_client.recv(1024)
+            # send key to client
+            socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
 
-        socket_client.send("Received cert".encode())
+            #recv_pub_key(socket_client)
+            recv_pem_cert = socket_client.recv(1024)
+            print("Received cert ", recv_pem_cert)
+            recv_cert = Certificat(recv_pem_cert)
 
-        client_pub_key = socket_client.recv(1024)
-        print("Received key ", client_pub_key)
-        client_pub_key = load_pem_public_key(client_pub_key, backend=default_backend())
+            socket_client.send("Received cert".encode())
 
-        if not recv_cert.verif_certif(client_pub_key): print("Could not verify certificate received by ", equipment_server.name)
-        else:
-            print("Certificate from client verified")
-            equipment_server.add_ca(client_name, equipment_server.name, recv_cert, client_pub_key)
-            equipment_server.affichage_ca()
+            client_pub_key = socket_client.recv(1024)
+            print("Received key ", client_pub_key)
+            client_pub_key = load_pem_public_key(client_pub_key, backend=default_backend())
 
-        sent_cert = equipment_server.certify(client_pub_key)
-        socket_client.send(serialize_cert_to_pem(sent_cert))
+            if not recv_cert.verif_certif(client_pub_key): print("Could not verify certificate received by ", equipment_server.name)
+            else:
+                print("Certificate from client verified")
+                equipment_server.add_ca(client_name, equipment_server.name, recv_cert, client_pub_key)
+                equipment_server.affichage_ca()
 
-        print("Fermeture de la connexion server de l'équipement: %s" % equipment_server.name)
-        socket_client.close()
-        socket_server.close()
+            sent_cert = equipment_server.certify(client_pub_key)
+            socket_client.send(serialize_cert_to_pem(sent_cert))
+
+    print("Fermeture de la connexion server de l'équipement: %s" % equipment_server.name)
+    socket_client.close()
+    socket_server.close()
 
 
 def open_socket_client(equipment_client, hote, equipment_server):
@@ -88,6 +94,16 @@ def open_socket_client(equipment_client, hote, equipment_server):
     print("Fermeture de la connexion client")
     socket_client.close()
 
+
+# Open a socket connection to the listening server to close it
+def open_close_socket_client(hote, equipment_server):
+    socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket_client.connect((hote, equipment_server.port))
+    print("Connexion établie avec le serveur sur le port {}".format(equipment_server.port))
+    msg = "end".encode()
+    socket_client.send(msg)
+    print("Fermeture de la connexion client")
+    socket_client.close()
 
 def serialize_key_to_pem(object):
     # msg = msg.encode() does not work for public keys
