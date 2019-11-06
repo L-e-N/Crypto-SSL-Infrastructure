@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.serialization import load_pem_public_key
 def open_socket_server(equipment_server, hote):
     socket_server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     socket_server.bind((hote, equipment_server.port))
-    socket_server.listen(5)
+    socket_server.listen(5) # 5 The backlog argument specifies the maximum number of queued connections
 
     print("Le serveur écoute à présent sur le port {}".format(equipment_server.port))
 
@@ -27,7 +27,9 @@ def open_socket_server(equipment_server, hote):
         mode_recu = socket_client.recv(1024)
         mode_recu = mode_recu.decode()
         print("Mode reçu %s" % mode_recu)
-        if mode_recu == "": print("Empty mode for", equipment_server.name, " and ", hote)
+        if mode_recu == "":
+            print("Empty mode received by", equipment_server.name)
+            time.sleep(1)
         if mode_recu.startswith("Certificate exchange"):
             client_name = mode_recu.split()[-1]
             #if not confirm(equipment_server.name, client_name): return "Not connecting equipments"
@@ -53,7 +55,7 @@ def open_socket_server(equipment_server, hote):
             else:
                 print("Certificate from client verified")
                 equipment_server.add_ca(client_name, equipment_server.name, recv_cert, client_pub_key)
-                equipment_server.affichage_ca()
+                #equipment_server.affichage_ca()
 
             sent_cert = equipment_server.certify(client_pub_key)
             socket_client.send(serialize_cert_to_pem(sent_cert))
@@ -68,12 +70,10 @@ def open_socket_server(equipment_server, hote):
             # sending DA to client
             socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
 
-            print("Sending end message from server")
-            socket_client.send("end".encode())
-
     print("Fermeture de la connexion server de l'équipement: %s" % equipment_server.name)
     socket_client.close()
-    socket_server.close()
+
+    # socket_server.close()
 
 
 def open_socket_client(equipment_client, hote, equipment_server):
@@ -102,9 +102,9 @@ def open_socket_client(equipment_client, hote, equipment_server):
     recv_cert = Certificat(recv_pem_cert)
     if not recv_cert.verif_certif(server_pub_key): print("Could not verify certificate received by ", equipment_client.name)
     else:
-        print("Certificate from server verified")
+        print("Certificate from server", server_name, " verified, updating CA")
         equipment_client.add_ca(server_name, equipment_client.name, recv_cert, server_pub_key)
-        equipment_client.affichage_ca()
+        #equipment_client.affichage_ca()
 
     # receive CA in pem from the server to the client
     CA = pickle.loads(socket_client.recv(4096))
@@ -116,9 +116,8 @@ def open_socket_client(equipment_client, hote, equipment_server):
     #receive DA in pem
     DA = pickle.loads(socket_client.recv(4096))
     DA = pem_dictionary_to_dictionary(DA)
-    print("CA and DA received")
 
-    equipment_client.synchronize_da(CA, DA, verbose = True)
+    equipment_client.synchronize_da(CA, DA, verbose = False)
     # socket_client.send(serialize_to_pem(equipment_client.pub_key()))
     print("Fermeture de la connexion client")
     socket_client.send("end".encode())
@@ -165,7 +164,6 @@ def dictionary_to_pem_dictionary(d):
 
 def serialize_cert_to_pem(object):
     # msg = msg.encode() does not work for public keys
-    print("OBJECT", object)
     try:
         pem = object.x509.public_bytes(serialization.Encoding.PEM)
     except ValueError:
