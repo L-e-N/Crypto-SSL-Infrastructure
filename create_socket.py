@@ -1,3 +1,4 @@
+import pickle
 import socket
 import threading
 import time
@@ -20,15 +21,16 @@ def open_socket_server(equipment_server, hote):
 
     socket_client, infos_connexion = socket_server.accept()
 
-    mode_recu = b""
-    while mode_recu != b"end":
+    mode_recu = ""
+    while mode_recu != "end":
         print("Attente d'un message")
         mode_recu = socket_client.recv(1024)
         mode_recu = mode_recu.decode()
         print("Mode reçu %s" % mode_recu)
+        if mode_recu == "": print("Empty mode for", equipment_server.name, " and ", hote)
         if mode_recu.startswith("Certificate exchange"):
             client_name = mode_recu.split()[-1]
-            if not confirm(equipment_server.name, client_name): return "Not connecting equipments"
+            #if not confirm(equipment_server.name, client_name): return "Not connecting equipments"
 
             socket_client.send(equipment_server.name.encode())
             # waiting for client to say that he received the name
@@ -56,13 +58,26 @@ def open_socket_server(equipment_server, hote):
             sent_cert = equipment_server.certify(client_pub_key)
             socket_client.send(serialize_cert_to_pem(sent_cert))
 
+            # sending CA to client
+            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.ca)))
+
+            # receive confirmation
+            msg = socket_client.recv(1024).decode()
+            print(msg)
+
+            # sending DA to client
+            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
+
+            print("Sending end message from server")
+            socket_client.send("end".encode())
+
     print("Fermeture de la connexion server de l'équipement: %s" % equipment_server.name)
     socket_client.close()
     socket_server.close()
 
 
 def open_socket_client(equipment_client, hote, equipment_server):
-    if not confirm(equipment_client.name, equipment_server.name): return "Not connecting equipments"
+    #if not confirm(equipment_client.name, equipment_server.name): return "Not connecting equipments"
     socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     socket_client.connect((hote, equipment_server.port))
     print("Connexion établie avec le serveur sur le port {}".format(equipment_server.port))
@@ -90,8 +105,23 @@ def open_socket_client(equipment_client, hote, equipment_server):
         print("Certificate from server verified")
         equipment_client.add_ca(server_name, equipment_client.name, recv_cert, server_pub_key)
         equipment_client.affichage_ca()
+
+    # receive CA in pem from the server to the client
+    CA = pickle.loads(socket_client.recv(4096))
+    CA = pem_dictionary_to_dictionary(CA)
+
+    # send a message for to make the server send it's DA
+    socket_client.send("CA server received".encode())
+
+    #receive DA in pem
+    DA = pickle.loads(socket_client.recv(4096))
+    DA = pem_dictionary_to_dictionary(DA)
+    print("CA and DA received")
+
+    equipment_client.synchronize_da(CA, DA, verbose = True)
     # socket_client.send(serialize_to_pem(equipment_client.pub_key()))
     print("Fermeture de la connexion client")
+    socket_client.send("end".encode())
     socket_client.close()
 
 
@@ -115,9 +145,27 @@ def serialize_key_to_pem(object):
         print("The key could not be converted to PEM")
     return pem
 
+def pem_dictionary_to_dictionary(d):
+    d_out = {}
+    for k1, v1 in d.items():
+        v = {} # inner dictionary
+        for k2, v2 in v1.items():
+            v[k2] = Certificat(v2)
+        d_out[k1] = v
+    return d_out
+
+def dictionary_to_pem_dictionary(d):
+    d_out = {}
+    for k1, v1 in d.items():
+        v = {}# inner dictionary
+        for k2, v2 in v1.items():
+            v[k2] = serialize_cert_to_pem(v2)
+        d_out[k1] = v
+    return d_out
 
 def serialize_cert_to_pem(object):
     # msg = msg.encode() does not work for public keys
+    print("OBJECT", object)
     try:
         pem = object.x509.public_bytes(serialization.Encoding.PEM)
     except ValueError:

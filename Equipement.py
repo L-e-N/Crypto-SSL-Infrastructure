@@ -31,10 +31,10 @@ class Equipment:
         self.da = {}
 
     def affichage_da(self):
-        print()
+        print("Printing the DA of ", self.name, " : ", self.da)
 
     def affichage_ca(self):
-        print(self.ca)
+        print("Printing the CA of ", self.name, " : ", self.ca)
 
     def affichage(self):
         print("Equipment name: ", self.name, "Equipment port :", self.port)
@@ -64,17 +64,25 @@ class Equipment:
     def add_ca(self, certifying_equipment_name, certified_equipment_name, cert, certifying_equipment_pub_key):
         # if CA already contains the equipment, simply add the certified equipment
         if self.ca.get(certifying_equipment_name, False):
-            self.ca[certifying_equipment_name][certified_equipment_name] = (cert, certifying_equipment_pub_key)
+            self.ca[certifying_equipment_name][certified_equipment_name] = cert
         # else, create a new key for the equipment containing a dictionary with the certified equipment
         else:
-            self.ca[certifying_equipment_name] = {certified_equipment_name: (cert, certifying_equipment_pub_key)}
+            self.ca[certifying_equipment_name] = {certified_equipment_name: cert}
 
-    def synchronize_da(self, equipment):
-        # add the (keys,values) from equipment.da and equipment.ca that are NOT in self.da
-        self.da = dict(dict(equipment.da, **equipment.ca), **self.da)
-        for sda in self.da:
-            # for each key of self.DA, add all the (key,value) of equipment.CA[key] and DA[key] that are not in self.DA[key]
-            self.da[sda] = dict(dict(equipment.da.get(sda, {}), **equipment.ca.get(sda, {})), **self.da[sda])
+    def synchronize_da(self, ca, da, verbose=False):
+        if verbose :
+            print("SYNCHRONIZE DA OF ", self.name)
+            print(self.ca)
+            print(self.da)
+            print(ca)
+            print(da)
+        # add the (keys,values) from da and ca that are NOT in self.da
+        self.da = dict(dict(dict(self.ca, **da), **ca), **self.da)
+        #for sda in self.da:
+        #    # for each key of self.DA, add all the (key,value) of equipment.CA[key] and DA[key] that are not in self.DA[key]
+        #    self.da[sda] = dict(dict(da.get(sda, {}), **ca.get(sda, {})), **self.da[sda])
+        if verbose:
+            print(self.da)
 
     # is there a path from the current equipment to another equipment ?
     def chain_exists(self, equipment):
