@@ -4,6 +4,7 @@ from PaireClesRSA import PaireClesRSA
 from Equipement import *
 from create_socket import *
 from Certificat import Certificat
+from PyInquirer import prompt
 
 
 def test():
@@ -18,6 +19,18 @@ def test():
     v2 = cert.verif_certif(e2.keypair.public())
     print("Verification of cert by e1", v1)
     print("Verification of cert by e2", v2)
+
+
+def cli_create_equipment():
+    questions = [
+        {
+            'type': 'input',
+            'name': 'ID',
+            'message': 'ID of the new equipment?'
+        }
+    ]
+    answers = prompt(questions)
+    print(answers)
 
 
 def test_socket():
@@ -75,4 +88,4 @@ Problèmes:
 - lasiser au socket server le temps de s'ouvrir avant de se connecter (time.sleep) 
 - Attention à bien finir le socket server sinon quand on relance c'est déjà pris (clic sur carré rouge)
 """
-test_socket()
+cli_create_equipment()
