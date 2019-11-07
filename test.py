@@ -21,7 +21,7 @@ def test():
     print("CONNECTING C TO B")
     #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     #print(sock.connect_ex(('localhost', _port+1)) == 0) #le port s'est ferme
-    C.connect_to_equipment(B)
+    B.connect_to_equipment(C)
 
     print(A.ca)
     print(B.ca)
@@ -29,7 +29,8 @@ def test():
     print(A.da)
     print(B.da)
     print(C.da)
-
+    cert = B.da['B']['C']
+    print(cert.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
 
 def cli_create_equipment():
     questions = [

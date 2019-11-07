@@ -13,10 +13,19 @@ class Certificat:
         else:
             self.x509 = None
     
-    def create_cert(self, name, pub_key, pri_key, validity_days=10):
-        subject = issuer = x509.Name([
-            x509.NameAttribute(NameOID.COMMON_NAME, name)
-        ])
+    def create_cert(self, client_name, server_name, pub_key, pri_key, validity_days=10):
+
+        if client_name == server_name : #autocertify
+            subject = issuer = x509.Name([
+                x509.NameAttribute(NameOID.COMMON_NAME, server_name)
+            ])
+        else :
+            subject = x509.Name([
+                x509.NameAttribute(NameOID.COMMON_NAME, client_name)
+            ])
+            issuer = x509.Name([
+                x509.NameAttribute(NameOID.COMMON_NAME, server_name)
+            ])
         self.x509 = x509.CertificateBuilder().subject_name(
             subject
         ).issuer_name(

@@ -57,7 +57,7 @@ def open_socket_server(equipment_server, hote):
                 equipment_server.add_ca(client_name, equipment_server.name, recv_cert, client_pub_key)
                 #equipment_server.affichage_ca()
 
-            sent_cert = equipment_server.certify(client_pub_key)
+            sent_cert = equipment_server.certify(client_pub_key, client_name)
             socket_client.send(serialize_cert_to_pem(sent_cert))
 
             # sending CA to client
@@ -91,7 +91,7 @@ def open_socket_client(equipment_client, hote, equipment_server):
     socket_client.send(msg.encode())
 
     server_pub_key = recv_pub_key(socket_client)
-    cert = equipment_client.certify(server_pub_key)
+    cert = equipment_client.certify(server_pub_key, server_name)
     socket_client.send(serialize_cert_to_pem(cert))
 
     socket_client.recv(1024)

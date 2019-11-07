@@ -22,7 +22,7 @@ class Equipment:
         self.port = port
         self.keypair = PaireClesRSA()
         self.cert = Certificat()
-        self.cert.create_cert(self.name, self.keypair.public(), self.keypair.private(), self.validity_days)
+        self.cert.create_cert(self.name, self.name, self.keypair.public(), self.keypair.private(), self.validity_days)
 
         ''' When we create an equipment, we start a thread that opens a server socket to listen to others '''
         self.thread_server = threading.Thread(target=open_socket_server, args=(self, ''))
@@ -49,9 +49,9 @@ class Equipment:
     def cert(self):
         return self.cert
 
-    def certify(self, pub_key):
+    def certify(self, pub_key, client_name):
         cert = Certificat()
-        cert.create_cert(self.name, pub_key, self.keypair.private(), 10)
+        cert.create_cert(self.name, client_name, pub_key, self.keypair.private(), 10)
         return cert
 
     def connect_to_equipment(self, equipment):
