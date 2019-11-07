@@ -30,7 +30,17 @@ def test():
     print(B.da)
     print(C.da)
     cert = B.da['B']['C']
-    print(find_chain('A','C',B.da))
+    certB=B.cert
+    print(certB.x509.signature_hash_algorithm)
+    keyA = A.pub_key()
+    path, cert_chain = find_chain('A','C',B.da)
+    print(cert_chain[0].x509.signature_hash_algorithm) # identical
+    key = cert_chain[0].x509.public_key()
+
+    print(certB.verif_certif(B.pub_key()))
+
+    start_key = A.pub_key()
+    verify_chain(start_key, cert_chain)
     print(cert.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
 
 def cli_create_equipment():
@@ -101,3 +111,4 @@ Problèmes:
 - Attention à bien finir le socket server sinon quand on relance c'est déjà pris (clic sur carré rouge)
 """
 test()
+

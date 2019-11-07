@@ -25,7 +25,7 @@ class Equipment:
         self.cert.create_cert(self.name, self.name, self.keypair.public(), self.keypair.private(), self.validity_days)
 
         ''' When we create an equipment, we start a thread that opens a server socket to listen to others '''
-        self.thread_server = threading.Thread(target=open_socket_server, args=(self, ''))
+        self.thread_server = threading.Thread(target=open_socket_server, args=(self, 'localhost'))
         self.thread_server.start()
         self.ca = {}
         self.da = {}
@@ -57,7 +57,7 @@ class Equipment:
     def connect_to_equipment(self, equipment):
         """ Start a thread that open a client socket connected to the server socket of another equipement """
         """ We should use different open_socket_client to have a different behaviour for what we want to ask to the other equipment (add, sync..) """
-        y = threading.Thread(target=open_socket_client, args=(self, '', equipment))
+        y = threading.Thread(target=open_socket_client, args=(self, 'localhost', equipment))
         y.start()
         y.join()
 
@@ -105,12 +105,28 @@ class Equipment:
 def find_chain(start, end, d):
     current_node = d.get(start)
     path = [start]
+    cert_chain = []
     while not current_node.get(end, False):
         next = list(current_node.keys())[0]
         path.append(next)
+        cert_chain.append(current_node[next])
         current_node = d.get(next)
-    path.append(list(current_node.keys())[0]) #note : this value should ve equal to end
-    return path
+    next = list(current_node.keys())[0] #note : this value should be equal to end
+    path.append(next)
+    cert_chain.append(current_node[next])
+    return path, cert_chain
+
+def verify_chain(start_pub_key, cert_chain):
+    for x in cert_chain :
+        try : 
+            if x.verif_certif(start_pub_key):
+                print(x)
+                start_pub_key = x.x509.public_key()
+        except : 
+            print("Chain certification error, breaking")
+            return False
+    print("The chain has been verified")
+    return True
 
 
 # tests for dictionary unions

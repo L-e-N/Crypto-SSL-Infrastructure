@@ -2,3 +2,5 @@
 venv/
 dangvenv/
 .idea/
+/env_ssl
+/.vs
