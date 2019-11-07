@@ -23,7 +23,7 @@ def open_socket_server(equipment_server, hote):
 
     mode_recu = ""
     while mode_recu != "end":
-        print("Attente d'un message")
+        #print("Attente d'un message")
         mode_recu = socket_client.recv(1024)
         mode_recu = mode_recu.decode()
         print("Mode reçu %s" % mode_recu)
@@ -72,7 +72,7 @@ def open_socket_server(equipment_server, hote):
 
     print("Fermeture de la connexion server de l'équipement: %s" % equipment_server.name)
     socket_client.close()
-
+    socket_client, infos_connexion = socket_server.accept()
     # socket_server.close()
 
 
@@ -85,7 +85,7 @@ def open_socket_client(equipment_client, hote, equipment_server):
     mode = mode.encode()
     socket_client.send(mode)
 
-    server_name = socket_client.recv(1024).decode()
+    server_name = socket_client.recv(4096).decode()
 
     msg = "Establishing connection between " + equipment_client.name + " and " + server_name
     socket_client.send(msg.encode())

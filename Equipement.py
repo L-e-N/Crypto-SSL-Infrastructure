@@ -25,7 +25,7 @@ class Equipment:
         self.cert.create_cert(self.name, self.keypair.public(), self.keypair.private(), self.validity_days)
 
         ''' When we create an equipment, we start a thread that opens a server socket to listen to others '''
-        self.thread_server = threading.Thread(target=open_socket_server, args=(self, 'localhost'))
+        self.thread_server = threading.Thread(target=open_socket_server, args=(self, ''))
         self.thread_server.start()
         self.ca = {}
         self.da = {}
@@ -57,7 +57,7 @@ class Equipment:
     def connect_to_equipment(self, equipment):
         """ Start a thread that open a client socket connected to the server socket of another equipement """
         """ We should use different open_socket_client to have a different behaviour for what we want to ask to the other equipment (add, sync..) """
-        y = threading.Thread(target=open_socket_client, args=(self, 'localhost', equipment))
+        y = threading.Thread(target=open_socket_client, args=(self, '', equipment))
         y.start()
         y.join()
 

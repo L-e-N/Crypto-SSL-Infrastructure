@@ -1,3 +1,5 @@
+from random import randint
+
 from cryptography.hazmat.primitives import serialization
 
 from PaireClesRSA import PaireClesRSA
@@ -8,7 +10,7 @@ from Certificat import Certificat
 
 
 def test():
-    _port = 11800
+    _port = randint(10000,12500)
     A = Equipment('A', _port)
     B = Equipment('B', _port+1)
     C = Equipment('C', _port + 2)
@@ -17,8 +19,8 @@ def test():
     time.sleep(1)
     print("")
     print("CONNECTING C TO B")
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    print(sock.connect_ex(('localhost', _port+1)) == 0) #le port s'est ferme
+    #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    #print(sock.connect_ex(('localhost', _port+1)) == 0) #le port s'est ferme
     C.connect_to_equipment(B)
 
     print(A.ca)
