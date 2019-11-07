@@ -28,29 +28,17 @@ def main():
         elif command == 'show network':
             print(network)
 
-            # à ajouter dans la classe Equipement
-            """def __str__(self):
-                return "(ID: %s, port: %d)" % (self.name, self.port)
-
-            def __repr__(self):
-                return self.__str__()"""
-
         elif command == 'show detail':
             selected_equipment = cli_select_equipment(network)
             print(selected_equipment)
             print(selected_equipment.name)
-            # à ajouter dans la classe Equipement
-            """def __str__(self):
-                return "(ID: %s, port: %d)" % (self.name, self.port)
-
-            def __repr__(self):
-                return self.__str__()"""
 
     for equipment in network:
-        # To close all listening sockets in equipement server thread, you can open a connection to these sockets and tell them to close.
+        # Fermer tous les sockets serveurs en ouvrant un connexion à eux et leur dire de fermer
         y = threading.Thread(target=open_close_socket_client, args=('localhost', equipment))
         y.start()
         y.join()
+
 
 """
 Problèmes:

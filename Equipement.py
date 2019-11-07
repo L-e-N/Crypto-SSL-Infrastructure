@@ -30,6 +30,12 @@ class Equipment:
         self.ca = {}
         self.da = {}
 
+    def __str__(self):
+            return "(ID: %s, port: %d)" % (self.name, self.port)
+
+    def __repr__(self):
+            return self.__str__()
+
     def affichage_da(self):
         print("Printing the DA of ", self.name, " : ", self.da)
 
@@ -88,18 +94,7 @@ class Equipment:
         if verbose:
             print(self.da)
 
-    # is there a path from the current equipment to another equipment ?
-    def chain_exists(self, equipment):
-        # pick a dictionary which contains the end node
-        dic = {}
-        for eda, v in chain(equipment.da):
-            if v.get(self.name, False):
-                dic = v
-                break
-        if dic == {}:
-            return False  # the chain does not exist
-        else:
-            findchain(self.name, equipment.name, v)
+
 
 
 def find_chain(start, end, d):
@@ -120,7 +115,6 @@ def verify_chain(start_pub_key, cert_chain):
     for x in cert_chain :
         try : 
             if x.verif_certif(start_pub_key):
-                print(x)
                 start_pub_key = x.x509.public_key()
         except : 
             print("Chain certification error, breaking")
