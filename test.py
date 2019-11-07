@@ -30,6 +30,7 @@ def test():
     print(B.da)
     print(C.da)
     cert = B.da['B']['C']
+    print(find_chain('A','C',B.da))
     print(cert.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
 
 def cli_create_equipment():

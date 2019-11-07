@@ -77,7 +77,11 @@ class Equipment:
             print(ca)
             print(da)
         # add the (keys,values) from da and ca that are NOT in self.da
-        self.da = dict(dict(dict(self.ca, **da), **ca), **self.da)
+        #self.da = dict(dict(dict(da, **ca), **self.ca), **self.da)
+        self.da = dict(self.ca, **self.da)
+        self.da = dict(ca, **self.da)
+        self.da = dict(da, **self.da)
+
         #for sda in self.da:
         #    # for each key of self.DA, add all the (key,value) of equipment.CA[key] and DA[key] that are not in self.DA[key]
         #    self.da[sda] = dict(dict(da.get(sda, {}), **ca.get(sda, {})), **self.da[sda])
@@ -98,8 +102,15 @@ class Equipment:
             findchain(self.name, equipment.name, v)
 
 
-def findchain(start, end, graph):
-    return ""
+def find_chain(start, end, d):
+    current_node = d.get(start)
+    path = [start]
+    while not current_node.get(end, False):
+        next = list(current_node.keys())[0]
+        path.append(next)
+        current_node = d.get(next)
+    path.append(list(current_node.keys())[0]) #note : this value should ve equal to end
+    return path
 
 
 # tests for dictionary unions
