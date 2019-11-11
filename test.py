@@ -18,37 +18,33 @@ def test2():
 
 def test():
     _port = randint(10000,12500)
+    Equipments = []
     A = Equipment('A', _port)
     B = Equipment('B', _port+1)
     C = Equipment('C', _port + 2)
-
+    D = Equipment('D', _port + 3)
+    E = Equipment('E', _port + 4)
+    Equipments = [A,B,C,D,E]
     A.connect_to_equipment(B)
-    time.sleep(1)
-    print("")
-    print("CONNECTING C TO B")
-    #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    #print(sock.connect_ex(('localhost', _port+1)) == 0) #le port s'est ferme
     C.connect_to_equipment(B)
+    E.connect_to_equipment(D)
+    D.connect_to_equipment(B)
 
-    print(A.ca)
-    print(B.ca)
-    print(C.ca)
-    print(A.da)
-    print(B.da)
-    print(C.da)
-    cert = B.da['B']['C']
-    certB=B.cert
-    print(certB.x509.signature_hash_algorithm)
-    keyA = A.pub_key()
-    path, cert_chain = find_chain('A','C',B.da)
-    print(cert_chain[0].x509.signature_hash_algorithm) # identical
-    key = cert_chain[0].x509.public_key()
+    for x in Equipments:
+        x.affichage_ca()
+    for x in Equipments:
+        x.affichage_da()
 
-    print(certB.verif_certif(B.pub_key()))
+    path, cert_chain1 = find_chain('A','C',C.da)
+    verify_chain(A.pub_key(), cert_chain1)
 
-    start_key = A.pub_key()
-    verify_chain(start_key, cert_chain)
-    print(cert.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value)
+    path, cert_chain2 = find_chain('E','B',B.da)
+    verify_chain(E.pub_key(), cert_chain2)
+
+    #key = cert_chain[0].x509.public_key()
+
+    #print(certB.verif_certif(B.pub_key()))
+
 
 
 
@@ -58,5 +54,5 @@ Problèmes:
 - lasiser au socket server le temps de s'ouvrir avant de se connecter (time.sleep) 
 - Attention à bien finir le socket server sinon quand on relance c'est déjà pris (clic sur carré rouge)
 """
-test2()
+test()
 
