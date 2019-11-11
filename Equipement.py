@@ -99,6 +99,9 @@ class Equipment:
 
 def find_chain(start, end, d):
     current_node = d.get(start)
+    if not current_node :
+        print("Error in find_chain: could not find start ", start, "in ", d)
+        return False, False
     path = [start]
     cert_chain = []
     while not current_node.get(end, False):

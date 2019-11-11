@@ -82,6 +82,20 @@ def open_socket_server(equipment_server, hote):
             # 10: Envoi du DA du serveur au client
             socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
 
+            # 11: Reception du CA 
+            CA = pickle.loads(socket_client.recv(4096))
+            CA = pem_dictionary_to_dictionary(CA)
+
+            # 12: Envoi bateau
+            socket_client.send("CA client received".encode())
+
+            # 13: Réception du DA 
+            DA = pickle.loads(socket_client.recv(4096))
+            DA = pem_dictionary_to_dictionary(DA)
+
+            # Synchronisation du DA 
+            equipment_server.synchronize_da(CA, DA, verbose = False)
+            
             socket_client.close()
 
     print("Fermeture de la connexion server de l'équipement: %s" % server_name)
@@ -146,6 +160,15 @@ def open_socket_client(equipment_client, hote, equipment_server):
 
     # Synchronisation du DA du client avec le CA et DA du serveur
     equipment_client.synchronize_da(CA, DA, verbose = False)
+
+    # 11: Envoi du CA
+    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_client.ca)))
+
+    # 12: Réception bateau
+    msg = socket_client.recv(1024).decode()
+
+    # 13: Envoi du DA 
+    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_client.da)))
 
     print("Fermeture de la connexion entre %s et %s" % (client_name, server_name))
     socket_client.close()
