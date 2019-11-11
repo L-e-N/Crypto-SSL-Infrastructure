@@ -26,6 +26,15 @@ def cli_command(network):
                 'value': 'show detail'
             },
         )
+    if len(network) > 1:
+        choices.insert(
+            -1,
+            {
+                'name': 'Insert an equipement',
+                'value': 'insert equipment'
+            },
+        )
+
     questions = [
         {
             'type': 'list',
@@ -56,7 +65,7 @@ def cli_create_equipment():
     return new_equipment
 
 
-def cli_select_equipment(network):
+def cli_select_equipment(network, msg):
     choices = []
     for equipment in network:
         choices.append({
@@ -68,13 +77,15 @@ def cli_select_equipment(network):
         {
             'type': 'list',
             'name': 'selected_equipment_name',
-            'message': 'select an equipement',
+            'message': msg,
             'choices': choices
         }
     ]
     answers = prompt(questions)
-    selected_equipment = (equipment for equipment in network if equipment.name == answers['selected_equipement_name'])
-    return selected_equipment
+
+    for equipment in network:
+        if equipment.name == answers['selected_equipment_name']:
+            return equipment
 
 
 def cli_validate(msg):

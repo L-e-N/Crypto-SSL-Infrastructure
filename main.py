@@ -13,6 +13,8 @@ def main():
     # Already create an equipement for test
     new_equipment = Equipment("Dang", 12500)
     network.append(new_equipment)
+    new_equipment = Equipment("Dang2", 12501)
+    network.append(new_equipment)
 
     # User input to do a command
     command = ""
@@ -29,9 +31,16 @@ def main():
             print(network)
 
         elif command == 'show detail':
-            selected_equipment = cli_select_equipment(network)
-            print(selected_equipment)
-            print(selected_equipment.name)
+            selected_equipment = cli_select_equipment(network, "Select the equipment to detail")
+            selected_equipment.affichage_ca()
+            selected_equipment.affichage_da()
+
+        elif command == 'insert equipment':
+            added_equipement = cli_select_equipment(network, "Select the equipement to insert")
+            temp_network = network.copy()  # Can't select the already selected one
+            temp_network.remove(added_equipement)
+            host_equipement = cli_select_equipment(temp_network, "Select the equipement to connect to")
+            added_equipement.connect_to_equipment(host_equipement)
 
     for equipment in network:
         # Fermer tous les sockets serveurs en ouvrant un connexion à eux et leur dire de fermer
