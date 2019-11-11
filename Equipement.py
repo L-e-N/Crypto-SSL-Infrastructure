@@ -37,10 +37,21 @@ class Equipment:
             return self.__str__()
 
     def affichage_da(self):
-        print("Printing the DA of ", self.name, " : ", self.da)
+        da = []
+        for key, value in self.da.items():
+            da.append(key)
+            for key2 in value.keys():
+                da.append(key2)
+        
+        print("Printing the DA of ", self.name, " : ",list(set(da)))
+
 
     def affichage_ca(self):
-        print("Printing the CA of ", self.name, " : ", self.ca)
+        ca = []
+        for key in self.ca.keys():
+            ca.append(key)
+        
+        print("Printing the CA of ", self.name, " : ",ca)
 
     def affichage(self):
         print("Equipment name: ", self.name, "Equipment port :", self.port)

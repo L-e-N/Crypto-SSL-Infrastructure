@@ -83,14 +83,14 @@ def open_socket_server(equipment_server, hote):
             socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
 
             # 11: Reception du CA 
-            CA = pickle.loads(socket_client.recv(4096))
+            CA = pickle.loads(socket_client.recv(16384))
             CA = pem_dictionary_to_dictionary(CA)
 
             # 12: Envoi bateau
             socket_client.send("CA client received".encode())
 
             # 13: Réception du DA 
-            DA = pickle.loads(socket_client.recv(4096))
+            DA = pickle.loads(socket_client.recv(16384))
             DA = pem_dictionary_to_dictionary(DA)
 
             # Synchronisation du DA 
@@ -148,14 +148,14 @@ def open_socket_client(equipment_client, hote, equipment_server):
         equipment_client.add_ca(server_name, equipment_client.name, recv_cert, server_pub_key)
 
     # 8: Reception du CA du serveur
-    CA = pickle.loads(socket_client.recv(4096))
+    CA = pickle.loads(socket_client.recv(16384))
     CA = pem_dictionary_to_dictionary(CA)
 
     # 9: Envoi bateau
     socket_client.send("CA server received".encode())
 
     # 10: Réception du DA du serveur
-    DA = pickle.loads(socket_client.recv(4096))
+    DA = pickle.loads(socket_client.recv(16384))
     DA = pem_dictionary_to_dictionary(DA)
 
     # Synchronisation du DA du client avec le CA et DA du serveur
