@@ -39,11 +39,12 @@ class Equipment:
     def affichage_da(self):
         da = []
         for key, value in self.da.items():
-            da.append(key)
-            for key2 in value.keys():
-                da.append(key2)
-        
-        print("Printing the DA of ", self.name, " : ",list(set(da)))
+            #da.append(key)
+            for key2, value2 in value.items():
+                #da.append(key2)
+                str = value2.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value + "->" + value2.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+                da.append(str)
+        print("Printing the DA of ", self.name, " : ",da)
 
 
     def affichage_ca(self):
@@ -52,6 +53,7 @@ class Equipment:
             ca.append(key)
         
         print("Printing the CA of ", self.name, " : ",ca)
+
 
     def affichage(self):
         print("Equipment name: ", self.name, "Equipment port :", self.port)
