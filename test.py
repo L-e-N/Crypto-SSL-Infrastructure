@@ -37,7 +37,7 @@ def test():
         x.affichage_da()
 
 
-    path, cert_chain1 = find_chain('A','C',C.da)
+    print(find_chain('A','C',C.da))
     C.synchronize_to_equipment(A)
 
     print(find_chain('C','D',D.da)[0])

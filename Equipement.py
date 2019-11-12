@@ -31,21 +31,21 @@ class Equipment:
         self.da = {}
 
     def __str__(self):
-            return "(ID: %s, port: %d)" % (self.name, self.port)
+        return "(ID: %s, port: %d)" % (self.name, self.port)
 
     def __repr__(self):
-            return self.__str__()
+        return self.__str__()
 
     def affichage_da(self):
         da = []
         for key, value in self.da.items():
-            #da.append(key)
+            # da.append(key)
             for key2, value2 in value.items():
-                #da.append(key2)
-                str = value2.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value + "->" + value2.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+                # da.append(key2)
+                str = value2.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value + "->" + \
+                      value2.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
                 da.append(str)
-        print("Printing the DA of ", self.name, " : ",da)
-
+        print("Printing the DA of ", self.name, " : ", da)
 
     def affichage_ca(self):
         ca = []
@@ -53,7 +53,6 @@ class Equipment:
             ca.append(key)
         
         print("Printing the CA of ", self.name, " : ",ca)
-
 
     def affichage(self):
         print("Equipment name: ", self.name, "Equipment port :", self.port)
@@ -77,6 +76,13 @@ class Equipment:
         """ Start a thread that open a client socket connected to the server socket of another equipement """
         """ We should use different open_socket_client to have a different behaviour for what we want to ask to the other equipment (add, sync..) """
         y = threading.Thread(target=open_socket_client, args=(self, 'localhost', equipment))
+        y.start()
+        y.join()
+
+    def synchronize_to_equipment(self, equipment):
+        """ Start a thread that open a client socket connected to the server socket of another equipement """
+        """ We should use different open_socket_client to have a different behaviour for what we want to ask to the other equipment (add, sync..) """
+        y = threading.Thread(target=synchronize_socket_client, args=(self, 'localhost', equipment))
         y.start()
         y.join()
 
@@ -110,34 +116,6 @@ class Equipment:
 
 
 
-def find_chain(start, end, d):
-    current_node = d.get(start)
-    if not current_node :
-        print("Error in find_chain: could not find start ", start, "in ", d)
-        return False, False
-    path = [start]
-    cert_chain = []
-    while not current_node.get(end, False):
-        next = list(current_node.keys())[0]
-        path.append(next)
-        cert_chain.append(current_node[next])
-        current_node = d.get(next)
-    next = list(current_node.keys())[0] #note : this value should be equal to end
-    path.append(next)
-    cert_chain.append(current_node[next])
-    return path, cert_chain
-
-def verify_chain(start_pub_key, cert_chain):
-    for x in cert_chain :
-        try : 
-            if x.verif_certif(start_pub_key):
-                start_pub_key = x.x509.public_key()
-        except : 
-            print("Chain certification error, breaking")
-            return False
-    print("The chain has been verified")
-    return True
-
 
 # tests for dictionary unions
 """  a -- b -- c """
@@ -147,9 +125,10 @@ CAc = {'b': {'c': ('certbc', 'pubc')}}
 DAa = {'c': {'b': ('certcb', 'pubc')}}
 DAb = {}
 DAc = {'c': {'b': ('certcbprime', 'pubc')}}
+
+
 # NOTE : dict(CAa, **DAc) union only with the keys. Does not go in depth. If key conflict, DAc values are used
 # Same for CAa.update(DAc), which updates the CAa values with the DAc values
-
 
 
 # DAafter = defaultdict(list)
