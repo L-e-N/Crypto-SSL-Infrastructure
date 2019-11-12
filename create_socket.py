@@ -1,12 +1,13 @@
 import pickle
 import socket
 
-from cli import cli_validate
+#from cli import cli_validate
 from utils import *
 
 from Certificat import Certificat
 from cryptography.hazmat.backends import default_backend
 
+from chain_utils import find_chain, verify_chain
 from cryptography.hazmat.primitives.serialization import load_pem_public_key
 
 
@@ -66,6 +67,19 @@ def open_socket_server(equipment_server, hote):
 
         if mode_recu.startswith("Chain proof"):
             # TODO: Vérification de la chaine de certificat reçu avant d'échanger les clés, les certifs et mettre à jour les DA
+            client_name = mode_recu.split()[-1]
+
+            # 1: Envoi du nom du serveur
+            socket_client.send(server_name.encode())
+
+            # 2: Reception chaine de certificat
+            cert_chain_pem = pickle.loads(socket_client.recv(16384))
+            cert_chain = [Certificat(recv_pem_cert) for recv_pem_cert in cert_chain_pem]
+            try:
+                verify_chain(equipment_server.pub_key(), cert_chain)
+                print("ok")
+            except ValueError:
+                print("Could not verify chain from ", equipment_server.name, ' to ', client_name)
 
             # ETAPE: Echange des clefs et des certificats
             if not echange_cle_cert_server(socket_client, equipment_server, server_name, client_name):
@@ -265,7 +279,6 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
     if cert_chain == [] or not cert_chain:
         print("Pas de chaine, fermeture de la connexion entre %s et %s" % (client_name, server_name))
     else:
-        cert_chain = [serialize_cert_to_pem(cert) for cert in cert_chain]
 
         # Connexion du socket client avec le socket du serveur par son port
         socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -280,7 +293,7 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
         # 1: Réception du nom du serveur
         server_name = socket_client.recv(4096).decode()
         # 2: Envoi de la chaine de certificat
-        print('Cert chain :', cert_chain)
+        cert_chain = [serialize_cert_to_pem(cert) for cert in cert_chain]
         socket_client.send(pickle.dumps(cert_chain))
 
         # 3: Réception de la clé du serveur
@@ -342,39 +355,5 @@ def open_close_socket_client(hote, equipment_server):
     socket_client.send(msg)
     socket_client.close()
 
-
-def find_chain(start, end, d):
-    if start == end:
-        print("Error, start == end")
-        return False, False
-    current_node = d.get(start)
-    if not current_node:
-        print("Error in find_chain: could not find start ", start, "in ", d)
-        return False, False
-    path = [start]
-    cert_chain = []
-    while not current_node.get(end, False):
-        _next = list(current_node.keys())[0]
-        if _next in path:
-            print("Error in find_chain: cycle detection on ", _next, "in ", d)
-            return False, False
-        path.append(_next)
-        cert_chain.append(current_node[_next])
-        current_node = d.get(_next)
-    _next = list(current_node.keys())[0]  # note : this value should be equal to end
-    path.append(_next)
-    cert_chain.append(current_node[_next])
-    return path, cert_chain
-
-def verify_chain(start_pub_key, cert_chain):
-    for x in cert_chain:
-        try:
-            if x.verif_certif(start_pub_key):
-                start_pub_key = x.x509.public_key()
-        except:
-            print("Chain certification error, breaking")
-            return False
-    #print("The chain has been verified")
-    return True
 
 

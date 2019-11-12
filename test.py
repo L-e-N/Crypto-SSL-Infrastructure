@@ -6,7 +6,7 @@ from PaireClesRSA import PaireClesRSA
 from Equipement import *
 from create_socket import *
 from Certificat import Certificat
-#from PyInquirer import prompt
+from chain_utils import find_chain, verify_chain
 
 
 def test2():
@@ -36,11 +36,15 @@ def test():
     for x in Equipments:
         x.affichage_da()
 
+    print(find_chain('A', 'C', C.da))
+    print(find_chain('A', 'C', C.da))
+    print(find_chain('A', 'C', C.da))
+    path, cert_chain = find_chain('A','C', C.da)
+    print(verify_chain(A.pub_key(),cert_chain))
 
-    print(find_chain('A','C',C.da))
     C.synchronize_to_equipment(A)
 
-    print(find_chain('C','D',D.da)[0])
+    print(find_chain('C', 'D', D.da)[0])
     print(find_chain('D', 'C', C.da)[0])
     C.synchronize_to_equipment(D)
     D.synchronize_to_equipment(C)
