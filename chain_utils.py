@@ -8,13 +8,13 @@ def find_chain(end, start, d, visited = []): # note : the path doesn't have the 
                 if visited:
                     if node not in visited:
                         visited.append(node)
-                        try : sub_path, sub_chain = find_chain(node, end, d, visited)
+                        try : sub_chain = find_chain(node, end, d, visited)
                         except : sub_chain = None
                         if sub_chain is not None:
                             return  [d[start][node]]+sub_chain
                 else: #visited is empty
                     visited.append(node)
-                    try : sub_path, sub_chain = find_chain(node, end, d, visited)
+                    try : sub_chain = find_chain(node, end, d, visited)
                     except : sub_chain = None
                     if sub_chain is not None:
                         return [d[start][node]]+sub_chain
