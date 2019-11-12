@@ -1,5 +1,5 @@
 from PaireClesRSA import PaireClesRSA
-from Equipement import *
+from Equipement import Equipment
 from create_socket import *
 from cli import *
 from Certificat import Certificat
@@ -23,9 +23,10 @@ def main():
         command = cli_command(network)
         print(command)
         if command == 'create equipment':
-            new_equipment = cli_create_equipment()
+            equipement_id, port = cli_create_equipment()
+            new_equipment = Equipment(equipement_id, port)
             network.append(new_equipment)
-            print('New equipement created')
+            print('New equipement %s was created' % equipement_id)
 
         elif command == 'show network':
             print(network)

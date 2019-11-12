@@ -3,6 +3,8 @@ import socket
 import threading
 import time
 
+from cli import cli_validate
+
 from Certificat import Certificat
 from cryptography import x509
 from cryptography.hazmat.backends import default_backend
@@ -44,58 +46,60 @@ def open_socket_server(equipment_server, hote):
         if mode_recu.startswith("Certificate exchange"):
             client_name = mode_recu.split()[-1]
 
-            # 1: Envoi du nom du serveur
-            socket_client.send(server_name.encode())
+            validation = cli_validate("%s: Do you want to add %s?" % (server_name, client_name))
+            if validation:
+                # 1: Envoi du nom du serveur
+                socket_client.send(server_name.encode())
 
-            # 2: Reception bateau
-            socket_client.recv(1024)
+                # 2: Reception bateau
+                socket_client.recv(1024)
 
-            # 3: Envoi de la clé publique du serveur
-            socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
+                # 3: Envoi de la clé publique du serveur
+                socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
 
-            # 4: Reception du certificat du client sur la clé du serveur
-            recv_pem_cert = socket_client.recv(1024)  # Reception en format pem
-            recv_cert = Certificat(recv_pem_cert)  # Conversion du certificat de pem à l'object Certificat
+                # 4: Reception du certificat du client sur la clé du serveur
+                recv_pem_cert = socket_client.recv(1024)  # Reception en format pem
+                recv_cert = Certificat(recv_pem_cert)  # Conversion du certificat de pem à l'object Certificat
 
-            # 5: Envoi bateau
-            socket_client.send("Received cert".encode())
+                # 5: Envoi bateau
+                socket_client.send("Received cert".encode())
 
-            # 6: Reception de la clé publique du client
-            client_pub_key = socket_client.recv(1024) # Reception en format pem
-            client_pub_key = load_pem_public_key(client_pub_key, backend=default_backend())  # Conversion de la clé publique de pem à pub key
+                # 6: Reception de la clé publique du client
+                client_pub_key = socket_client.recv(1024) # Reception en format pem
+                client_pub_key = load_pem_public_key(client_pub_key, backend=default_backend())  # Conversion de la clé publique de pem à pub key
 
-            # Vérification du certificat reçu avec la clé publique du client
-            if not recv_cert.verif_certif(client_pub_key): print("Could not verify certificate received by ", server_name)
-            else:
-                # Mise à jour du CA du serveur
-                equipment_server.add_ca(client_name, server_name, recv_cert, client_pub_key)
+                # Vérification du certificat reçu avec la clé publique du client
+                if not recv_cert.verif_certif(client_pub_key): print("Could not verify certificate received by ", server_name)
+                else:
+                    # Mise à jour du CA du serveur
+                    equipment_server.add_ca(client_name, server_name, recv_cert, client_pub_key)
 
-            # 7: Envoi du certificat du serveur sur la clé du client
-            sent_cert = equipment_server.certify(client_pub_key, client_name)
-            socket_client.send(serialize_cert_to_pem(sent_cert))
+                # 7: Envoi du certificat du serveur sur la clé du client
+                sent_cert = equipment_server.certify(client_pub_key, client_name)
+                socket_client.send(serialize_cert_to_pem(sent_cert))
 
-            # 8: Envoi du CA du serveur au client
-            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.ca)))
+                # 8: Envoi du CA du serveur au client
+                socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.ca)))
 
-            # 9: Réception bateau
-            msg = socket_client.recv(1024).decode()
+                # 9: Réception bateau
+                msg = socket_client.recv(1024).decode()
 
-            # 10: Envoi du DA du serveur au client
-            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
+                # 10: Envoi du DA du serveur au client
+                socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
 
-            # 11: Reception du CA 
-            CA = pickle.loads(socket_client.recv(16384))
-            CA = pem_dictionary_to_dictionary(CA)
+                # 11: Reception du CA
+                CA = pickle.loads(socket_client.recv(16384))
+                CA = pem_dictionary_to_dictionary(CA)
 
-            # 12: Envoi bateau
-            socket_client.send("CA client received".encode())
+                # 12: Envoi bateau
+                socket_client.send("CA client received".encode())
 
-            # 13: Réception du DA 
-            DA = pickle.loads(socket_client.recv(16384))
-            DA = pem_dictionary_to_dictionary(DA)
+                # 13: Réception du DA
+                DA = pickle.loads(socket_client.recv(16384))
+                DA = pem_dictionary_to_dictionary(DA)
 
-            # Synchronisation du DA 
-            equipment_server.synchronize_da(CA, DA, verbose = False)
+                # Synchronisation du DA
+                equipment_server.synchronize_da(CA, DA, verbose = False)
             
             socket_client.close()
 
@@ -171,6 +175,11 @@ def open_socket_server(equipment_server, hote):
 def open_socket_client(equipment_client, hote, equipment_server):
     client_name = equipment_client.name
     server_name = equipment_server.name
+
+    validation = cli_validate("%s: Do you want to connect to %s?" % (client_name, server_name))
+
+    if not validation:
+        return
 
     # Connexion du socket client avec le socket du serveur par son port
     socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

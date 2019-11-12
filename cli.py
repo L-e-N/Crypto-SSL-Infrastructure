@@ -1,5 +1,3 @@
-from Equipement import Equipment
-
 from PyInquirer import prompt
 
 
@@ -61,8 +59,8 @@ def cli_create_equipment():
         },
     ]
     answers = prompt(questions)
-    new_equipment = Equipment(answers['id'], int(answers['port']))
-    return new_equipment
+    equipment_id, port = answers['id'], int(answers['port'])
+    return equipment_id, port
 
 
 def cli_select_equipment(network, msg):
