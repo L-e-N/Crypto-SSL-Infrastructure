@@ -32,6 +32,13 @@ def cli_command(network):
                 'value': 'insert equipment'
             },
         )
+        choices.insert(
+            -1,
+            {
+                'name': 'Synchronize two equipements',
+                'value': 'sync equipment'
+            },
+        )
 
     questions = [
         {
@@ -85,6 +92,12 @@ def cli_select_equipment(network, msg):
         if equipment.name == answers['selected_equipment_name']:
             return equipment
 
+def cli_select_two_equipments(network, msg1, msg2):
+    equipment1 = cli_select_equipment(network, msg1)
+    temp_network = network.copy()  # Can't select the already selected one
+    temp_network.remove(equipment1)
+    equipment2 = cli_select_equipment(temp_network, msg2)
+    return equipment1, equipment2
 
 def cli_validate(msg):
     questions = [

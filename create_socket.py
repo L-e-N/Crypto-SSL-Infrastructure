@@ -81,7 +81,7 @@ def open_socket_server(equipment_server, hote):
                 socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.ca)))
 
                 # 9: Réception bateau
-                msg = socket_client.recv(1024).decode()
+                msg = socket_client.recv(1024).decode(),
 
                 # 10: Envoi du DA du serveur au client
                 socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
