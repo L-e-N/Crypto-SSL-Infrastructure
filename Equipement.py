@@ -51,8 +51,9 @@ class Equipment:
 
     def affichage_ca(self):
         ca = []
-        for key in self.ca.keys():
-            ca.append(key)
+        for key, value in self.ca.items():
+            for key2 in value.keys():
+                ca.append(key2)
 
         print("Printing the CA of ", self.name, " : ",ca)
 

@@ -68,7 +68,9 @@ def open_socket_server(equipment_server, hote):
         if mode_recu.startswith("Chain proof"):
             # 1: Reception chaine de certificat
             cert_chain_pem = pickle.loads(socket_client.recv(16384))
-            cert_chain = [Certificat(recv_pem_cert) for recv_pem_cert in cert_chain_pem]
+            cert_chain = []
+            for cert in cert_chain :
+                cert_chain.append(serialize_cert_to_pem(cert))
 
             # 2: Envoie de la vérification de la chaine pour continuer ou end
             try:

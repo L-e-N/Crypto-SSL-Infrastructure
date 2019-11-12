@@ -36,16 +36,10 @@ def test():
     for x in Equipments:
         x.affichage_da()
 
-    print(find_chain('A', 'C', C.da))
-    print(find_chain('A', 'C', C.da))
-    print(find_chain('A', 'C', C.da))
-    path, cert_chain = find_chain('A','C', C.da)
-    print(verify_chain(A.pub_key(),cert_chain))
+    #path, cert_chain = find_chain('A','C', C.da)
+    #print(verify_chain(A.pub_key(),cert_chain))
 
     C.synchronize_to_equipment(A)
-
-    print(find_chain('C', 'D', D.da)[0])
-    print(find_chain('D', 'C', C.da)[0])
     C.synchronize_to_equipment(D)
     D.synchronize_to_equipment(C)
 
