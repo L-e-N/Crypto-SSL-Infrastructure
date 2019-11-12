@@ -1,3 +1,5 @@
+import threading
+
 from PaireClesRSA import PaireClesRSA
 
 from cryptography.hazmat.primitives import serialization
@@ -74,7 +76,6 @@ class Equipment:
 
     def connect_to_equipment(self, equipment):
         """ Start a thread that open a client socket connected to the server socket of another equipement """
-        """ We should use different open_socket_client to have a different behaviour for what we want to ask to the other equipment (add, sync..) """
         y = threading.Thread(target=open_socket_client, args=(self, 'localhost', equipment))
         y.start()
         y.join()
@@ -86,13 +87,25 @@ class Equipment:
         y.start()
         y.join()
 
-    def add_ca(self, certifying_equipment_name, certified_equipment_name, cert, certifying_equipment_pub_key):
+    def add_ca(self, cert):
+        issuer = cert.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        subject = cert.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
         # if CA already contains the equipment, simply add the certified equipment
-        if self.ca.get(certifying_equipment_name, False):
-            self.ca[certifying_equipment_name][certified_equipment_name] = cert
+        if self.ca.get(issuer, False):
+            self.ca[issuer][subject] = cert
         # else, create a new key for the equipment containing a dictionary with the certified equipment
         else:
-            self.ca[certifying_equipment_name] = {certified_equipment_name: cert}
+            self.ca[issuer] = {subject: cert}
+
+    def add_da(self, cert):
+        issuer = cert.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        subject = cert.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        # if CA already contains the equipment, simply add the certified equipment
+        if self.da.get(issuer, False):
+            self.da[issuer][subject] = cert
+        # else, create a new key for the equipment containing a dictionary with the certified equipment
+        else:
+            self.da[issuer] = {subject: cert}
 
     def synchronize_da(self, ca, da, verbose=False):
         if verbose :

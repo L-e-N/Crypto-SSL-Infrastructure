@@ -1,19 +1,20 @@
-from PaireClesRSA import PaireClesRSA
+import threading
+import time
+
 from Equipement import Equipment
 from create_socket import *
 from cli import *
-from Certificat import Certificat
 
 
 def main():
 
-    # List of equipments in the network
+    # List of equipments in the network and graph to display it with nodes and edges
     network = []
 
     # Already create an equipement for test
-    new_equipment = Equipment("Dang", 12500)
+    new_equipment = Equipment("Dang", 12508)
     network.append(new_equipment)
-    new_equipment = Equipment("Dang2", 12501)
+    new_equipment = Equipment("Dang2", 12509)
     network.append(new_equipment)
 
     # User input to do a command
@@ -37,11 +38,15 @@ def main():
             selected_equipment.affichage_da()
 
         elif command == 'insert equipment':
-            added_equipement = cli_select_equipment(network, "Select the equipement to insert")
-            temp_network = network.copy()  # Can't select the already selected one
-            temp_network.remove(added_equipement)
-            host_equipement = cli_select_equipment(temp_network, "Select the equipement to connect to")
-            added_equipement.connect_to_equipment(host_equipement)
+            added_equipment, host_equipment = cli_select_two_equipments(network, "Select the equipement to insert", "Select the equipement to be added to")
+            added_equipment.connect_to_equipment(host_equipment)
+
+        elif command == 'sync equipment':
+            syncing_equipment, synced_equipment = cli_select_two_equipments(network, "Select the equipement to to synchronize", "Select the equipement to be synchronized to")
+            # TODO: replace the method with the new one to synchronize
+            syncing_equipment.connect_to_equipment(synced_equipment)
+
+        time.sleep(1)  # Sleep before the next command
 
     for equipment in network:
         # Fermer tous les sockets serveurs en ouvrant un connexion à eux et leur dire de fermer
@@ -56,4 +61,4 @@ Problèmes:
 - lasiser au socket server le temps de s'ouvrir avant de se connecter (time.sleep) 
 - Attention à bien finir le socket server sinon quand on relance c'est déjà pris (clic sur carré rouge)
 """
-main()
+
