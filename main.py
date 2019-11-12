@@ -1,3 +1,6 @@
+import threading
+import time
+
 from Equipement import Equipment
 from create_socket import *
 from cli import *
@@ -7,15 +10,12 @@ def main():
 
     # List of equipments in the network and graph to display it with nodes and edges
     network = []
-    graph = nx.Graph()
 
     # Already create an equipement for test
-    new_equipment = Equipment("Dang", 12500)
+    new_equipment = Equipment("Dang", 12508)
     network.append(new_equipment)
-    graph.add_node(new_equipment.name)
-    new_equipment = Equipment("Dang2", 12501)
+    new_equipment = Equipment("Dang2", 12509)
     network.append(new_equipment)
-    graph.add_node(new_equipment.name)
 
     # User input to do a command
     command = ""
@@ -27,13 +27,10 @@ def main():
             equipement_id, port = cli_create_equipment()
             new_equipment = Equipment(equipement_id, port)
             network.append(new_equipment)
-            graph.add_node(new_equipment.name)
             print('New equipement %s was created' % equipement_id)
 
         elif command == 'show network':
             print(network)
-            nx.draw(graph, with_labels=True, font_weight='bold')
-            plt.show(block=False)
 
         elif command == 'show detail':
             selected_equipment = cli_select_equipment(network, "Select the equipment to detail")
@@ -65,26 +62,3 @@ Problèmes:
 - Attention à bien finir le socket server sinon quand on relance c'est déjà pris (clic sur carré rouge)
 """
 
-import networkx as nx
-
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
-
-def test():
-    plt.ion()
-    graph = nx.Graph()
-    graph.add_node(1)
-
-    nx.draw(graph, with_labels=True, font_weight='bold')
-
-    '''options = {
-    'node_color': 'black',
-    'node_size': 100,
-    'width': 3,
-    }
-    nx.draw_random(graph, **options)
-    plt.show()'''
-
-
-test()
