@@ -20,6 +20,7 @@ Remarques:
 '''
 
 
+# SERVEUR: Fonction pour ouvrir le socket du serveur afin de répondre aux clients qui se connectent selon le mode reçu
 def open_socket_server(equipment_server, hote):
     server_name = equipment_server.name
 
@@ -38,11 +39,11 @@ def open_socket_server(equipment_server, hote):
 
         # 0: Reception d'une connexion et d'un mode de fonctionnement
         mode_recu = socket_client.recv(1024).decode()
+        client_name = mode_recu.split()[-1]
         print("%s a reçu une connexion avec le mode [%s]" % (server_name, mode_recu))
 
         # Début du fonctionnement du serveur pour une insertion d'équipement
         if mode_recu.startswith("Certificate exchange"):
-            client_name = mode_recu.split()[-1]
 
             validation = cli_validate("%s: Do you want to add %s?" % (server_name, client_name))
             # 1: Envoi de la confirmation pour continuer ou de la fin de connexion si non validation
@@ -54,141 +55,173 @@ def open_socket_server(equipment_server, hote):
             else:
                 socket_client.send("continue".encode())
 
-            # ETAPE: Echange des clés
-            # 2: Envoi de la clé publique du serveur
-            socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
-
-            # 3: Reception de la clé publique du client
-            client_pub_key = socket_client.recv(1024)  # Reception en format pem
-            client_pub_key = load_pem_public_key(client_pub_key, backend=default_backend())  # Conversion de la clé publique de pem à pub key
-
-            # ETAPE: Echange des certificats
-            # 4: Reception du certificat du client sur la clé du serveur
-            recv_pem_cert = socket_client.recv(1024)  # Reception en format pem
-            recv_cert = Certificat(recv_pem_cert)  # Conversion du certificat de pem à l'object Certificat
-
-            # 5: Envoi du résultat de la vérification du certificat reçu
-            if not recv_cert.verif_certif(client_pub_key):
-                print("Could not verify certificate received by ", server_name)
-                socket_client.send("Certificate not verified".encode())
-                socket_client.close()
-                continue
-            else:
-                socket_client.send("Certificate verified".encode())
-                # Mise à jour du CA du serveur
-                equipment_server.add_ca(recv_cert)
-
-            # 6: Envoi du certificat du serveur sur la clé du client
-            sent_cert = equipment_server.certify(client_pub_key, client_name)
-            socket_client.send(serialize_cert_to_pem(sent_cert))
-
-            # 7: Reception de la vérification du certificat envoyé
-            verification = socket_client.recv(1024).decode()
-            if not verification == "Certificate verified":
-                socket_client.close()
+            # ETAPE: Echange des clefs et des certificats
+            if not echange_cle_cert_server(socket_client, equipment_server, server_name, client_name):
                 continue
 
             # ETAPE: Synchronisation des DA
-            # 8: Envoi du CA du serveur au client
-            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.ca)))
+            sync_da_server(socket_client, equipment_server)
 
-            # 9: Réception bateau
-            msg = socket_client.recv(1024).decode(),
-
-            # 10: Envoi du DA du serveur au client
-            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
-
-            # 11: Reception du CA
-            CA = pickle.loads(socket_client.recv(16384))
-            CA = pem_dictionary_to_dictionary(CA)
-
-            # 12: Envoi bateau
-            socket_client.send("CA client received".encode())
-
-            # 13: Réception du DA
-            DA = pickle.loads(socket_client.recv(16384))
-            DA = pem_dictionary_to_dictionary(DA)
-
-            # Synchronisation du DA
-            equipment_server.synchronize_da(CA, DA, verbose = False)
-
-            socket_client.close()
+            print("%s: Insertion de %s réussie" % (server_name, client_name))
 
         if mode_recu.startswith("Chain proof"):
-            client_name = mode_recu.split()[-1]
+            # TODO: Vérification de la chaine de certificat reçu avant d'échanger les clés, les certifs et mettre à jour les DA
 
-            # 1: Envoi du nom du serveur
-            socket_client.send(server_name.encode())
+            # ETAPE: Echange des clefs et des certificats
+            if not echange_cle_cert_server(socket_client, equipment_server, server_name, client_name):
+                continue
 
-            # 2: Reception chaine de certificat
-            cert_chain_pem = pickle.loads(socket_client.recv(16384))
-            cert_chain = [Certificat(recv_pem_cert) for recv_pem_cert in cert_chain_pem]
-            try:
-                verify_chain(equipment_server.pub_key(), cert_chain)
-            except ValueError:
-                print("Could not verify chain from ", equipment_server.name, ' to ', client_name)
+            # ETAPE: Synchronisation des DA
+            sync_da_server(socket_client, equipment_server)
 
-            # 3: Envoi de la clé publique du serveur
-            socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
+            print("%s: Synchronisation avec %s réussie" % (server_name, client_name))
 
-            # 4: Reception du certificat du client sur la clé du serveur
-            recv_pem_cert = socket_client.recv(1024)  # Reception en format pem
-            recv_cert = Certificat(recv_pem_cert)  # Conversion du certificat de pem à l'object Certificat
+        print("%s: Fermeture de la connexion entre %s et %s" % (server_name, client_name, server_name))
+        socket_client.close()
 
-            # 5: Envoi bateau
-            socket_client.send("Received cert".encode())
-
-            # 6: Reception de la clé publique du client
-            client_pub_key = socket_client.recv(1024)  # Reception en format pem
-            client_pub_key = load_pem_public_key(client_pub_key,
-                                                 backend=default_backend())  # Conversion de la clé publique de pem à pub key
-
-            # Vérification du certificat reçu avec la clé publique du client
-            if not recv_cert.verif_certif(client_pub_key):
-                print("Could not verify certificate received by ", server_name)
-            else:
-                # Mise à jour du CA du serveur
-                equipment_server.add_ca(recv_cert)
-
-            # 7: Envoi du certificat du serveur sur la clé du client
-            sent_cert = equipment_server.certify(client_pub_key, client_name)
-            socket_client.send(serialize_cert_to_pem(sent_cert))
-
-            # 8: Envoi du CA du serveur au client
-            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.ca)))
-
-            # 9: Réception bateau
-            msg = socket_client.recv(1024).decode()
-
-            # 10: Envoi du DA du serveur au client
-            socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
-
-            # 11: Reception du CA
-            CA = pickle.loads(socket_client.recv(16384))
-            CA = pem_dictionary_to_dictionary(CA)
-
-            # 12: Envoi bateau
-            socket_client.send("CA client received".encode())
-
-            # 13: Réception du DA
-            DA = pickle.loads(socket_client.recv(16384))
-            DA = pem_dictionary_to_dictionary(DA)
-
-            # Synchronisation du DA
-            equipment_server.synchronize_da(CA, DA, verbose=False)
-
-            socket_client.close()
-
-    print("Fermeture de la connexion server de l'équipement: %s" % server_name)
+    print("Fermeture de la connexion server de l'équipement :%s" % server_name)
     socket_server.close()
 
+# COMPORTEMENTS: Comportement du serveur et du client lors d'étape récurrentes dans différents modes de fonctionnement
+# Comportement du serveur lors de l'échange de clé et de certificat
+def echange_cle_cert_server(socket_client, equipment_server, server_name, client_name):
+    # ETAPE: Echange des clés
+    # 2: Envoi de la clé publique du serveur
+    socket_client.send(serialize_key_to_pem(equipment_server.pub_key()))
 
+    # 3: Reception de la clé publique du client
+    client_pub_key = socket_client.recv(1024)  # Reception en format pem
+    client_pub_key = load_pem_public_key(client_pub_key,
+                                         backend=default_backend())  # Conversion de la clé publique de pem à pub key
+
+    # ETAPE: Echange des certificats
+    # 4: Reception du certificat du client sur la clé du serveur
+    recv_pem_cert = socket_client.recv(1024)  # Reception en format pem
+    recv_cert = Certificat(recv_pem_cert)  # Conversion du certificat de pem à l'object Certificat
+
+    # 5: Envoi du résultat de la vérification du certificat reçu
+    if not recv_cert.verif_certif(client_pub_key):
+        print("Could not verify certificate received by ", server_name)
+        socket_client.send("Certificate not verified".encode())
+        socket_client.close()
+        return False
+    else:
+        socket_client.send("Certificate verified".encode())
+        # Mise à jour du CA du serveur
+        equipment_server.add_ca(recv_cert)
+
+    # 6: Envoi du certificat du serveur sur la clé du client
+    sent_cert = equipment_server.certify(client_pub_key, client_name)
+    socket_client.send(serialize_cert_to_pem(sent_cert))
+
+    # 7: Reception de la vérification du certificat envoyé
+    verification = socket_client.recv(1024).decode()
+    if not verification == "Certificate verified":
+        socket_client.close()
+        return False
+
+    return True
+
+
+# Comportement du client lors de l'échange de clé et de certificat
+def echange_cle_cert_client(socket_client, equipment_client, client_name, server_name):
+    # ETAPE: Echange des clés
+    # 2: Réception de la clé publique du serveur
+    server_pub_key = socket_client.recv(1024)
+    server_pub_key = load_pem_public_key(server_pub_key, backend=default_backend())
+
+    # 3: Envoi de la clé publique du client
+    socket_client.send(serialize_key_to_pem(equipment_client.pub_key()))
+
+    # ETAPE: Echange des certificats
+    # 4: Envoi du certificat du client sur la clé du serveur
+    cert = equipment_client.certify(server_pub_key, server_name)
+    socket_client.send(serialize_cert_to_pem(cert))
+
+    # 5: Reception de la vérification du certificat envoyé
+    verification = socket_client.recv(1024).decode()
+    if not verification == "Certificate verified":
+        socket_client.close()
+        return False
+
+    # 6: Reception du certificat du serveur sur la clé du client
+    recv_pem_cert = socket_client.recv(1024)
+    recv_cert = Certificat(recv_pem_cert)
+
+    # 7: Envoie de la vérification du certificat
+    if not recv_cert.verif_certif(server_pub_key):
+        print("Could not verify certificate received by ", client_name)
+        socket_client.send("Certificate not verified".encode())
+        socket_client.close()
+        return False
+    else:
+        socket_client.send("Certificate verified".encode())
+        # Ajout du certificat dans du serveur dans le CA du client
+        equipment_client.add_ca(recv_cert)
+
+    return True
+
+
+# Comportement du serveur lors de la synchronisation des DA
+def sync_da_server(socket_client, equipment_server):
+    # ETAPE: Synchronisation des DA
+    # 8: Envoi du CA du serveur au client
+    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.ca)))
+
+    # 9: Réception bateau
+    msg = socket_client.recv(1024).decode(),
+
+    # 10: Envoi du DA du serveur au client
+    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_server.da)))
+
+    # 11: Reception du CA
+    CA = pickle.loads(socket_client.recv(16384))
+    CA = pem_dictionary_to_dictionary(CA)
+
+    # 12: Envoi bateau
+    socket_client.send("CA client received".encode())
+
+    # 13: Réception du DA
+    DA = pickle.loads(socket_client.recv(16384))
+    DA = pem_dictionary_to_dictionary(DA)
+
+    # Synchronisation du DA
+    equipment_server.synchronize_da(CA, DA, verbose=False)
+
+
+# Comportement du client lors de la synchronisation des DA
+def sync_da_client(socket_client, equipment_client):
+    # ETAPE: Synchronisation des DA
+    # 8: Reception du CA du serveur
+    CA = pickle.loads(socket_client.recv(16384))
+    CA = pem_dictionary_to_dictionary(CA)
+
+    # 9: Envoi bateau
+    socket_client.send("CA server received".encode())
+
+    # 10: Réception du DA du serveur
+    DA = pickle.loads(socket_client.recv(16384))
+    DA = pem_dictionary_to_dictionary(DA)
+
+    # Synchronisation du DA du client avec le CA et DA du serveur
+    equipment_client.synchronize_da(CA, DA, verbose=False)
+
+    # 11: Envoi du CA
+    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_client.ca)))
+
+    # 12: Réception bateau
+    msg = socket_client.recv(1024).decode()
+
+    # 13: Envoi du DA
+    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_client.da)))
+
+
+# CLIENT: Function pour l'ouverture de socket client afin d'effectuer une interaction avec le serveur pour un certain mode
 def open_socket_client(equipment_client, hote, equipment_server):
     client_name = equipment_client.name
     server_name = equipment_server.name
 
     validation = cli_validate("%s: Do you want to connect to %s?" % (client_name, server_name))
-
     if not validation:
         print("%s do not want to add %s, End of the connection" % (client_name, server_name))
         return
@@ -209,66 +242,17 @@ def open_socket_client(equipment_client, hote, equipment_server):
         socket_client.close()
         return
 
-    # ETAPE: Echange des clés
-    # 2: Réception de la clé publique du serveur
-    server_pub_key = socket_client.recv(1024)
-    server_pub_key = load_pem_public_key(server_pub_key, backend=default_backend())
-
-    # 3: Envoi de la clé publique du client
-    socket_client.send(serialize_key_to_pem(equipment_client.pub_key()))
-
-    # ETAPE: Echange des certificats
-    # 4: Envoi du certificat du client sur la clé du serveur
-    cert = equipment_client.certify(server_pub_key, server_name)
-    socket_client.send(serialize_cert_to_pem(cert))
-
-    # 5: Reception de la vérification du certificat envoyé
-    verification = socket_client.recv(1024).decode()
-    if not verification == "Certificate verified":
-        socket_client.close()
+    # Echange des clefs et des certificats
+    if not echange_cle_cert_client(socket_client, equipment_client, client_name, server_name):
         return
 
-    # 6: Reception du certificat du serveur sur la clé du client
-    recv_pem_cert = socket_client.recv(1024)
-    recv_cert = Certificat(recv_pem_cert)
+    # Synchronisation des DA
+    sync_da_client(socket_client, equipment_client)
 
-    # 7: Envoie de la vérification du certificat
-    if not recv_cert.verif_certif(server_pub_key):
-        print("Could not verify certificate received by ", client_name)
-        socket_client.send("Certificate not verified".encode())
-        socket_client.close()
-        return
-    else:
-        socket_client.send("Certificate verified".encode())
-        # Ajout du certificat dans du serveur dans le CA du client
-        equipment_client.add_ca(recv_cert)
-
-    # ETAPE: Synchronisation des DA
-    # 8: Reception du CA du serveur
-    CA = pickle.loads(socket_client.recv(16384))
-    CA = pem_dictionary_to_dictionary(CA)
-
-    # 9: Envoi bateau
-    socket_client.send("CA server received".encode())
-
-    # 10: Réception du DA du serveur
-    DA = pickle.loads(socket_client.recv(16384))
-    DA = pem_dictionary_to_dictionary(DA)
-
-    # Synchronisation du DA du client avec le CA et DA du serveur
-    equipment_client.synchronize_da(CA, DA, verbose = False)
-
-    # 11: Envoi du CA
-    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_client.ca)))
-
-    # 12: Réception bateau
-    msg = socket_client.recv(1024).decode()
-
-    # 13: Envoi du DA 
-    socket_client.send(pickle.dumps(dictionary_to_pem_dictionary(equipment_client.da)))
-
-    print("Fermeture de la connexion entre %s et %s" % (client_name, server_name))
+    print("%s: Insertion dans le réseau de %s réussie" % (client_name, server_name))
+    print("%s: Fermeture de la connexion entre %s et %s" % (client_name, client_name, server_name))
     socket_client.close()
+
 
 def synchronize_socket_client(equipment_client, hote, equipment_server):
     client_name = equipment_client.name

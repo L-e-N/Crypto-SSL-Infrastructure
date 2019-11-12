@@ -12,9 +12,9 @@ def main():
     network = []
 
     # Already create an equipement for test
-    new_equipment = Equipment("Dang", 12508)
+    new_equipment = Equipment("Dang", 12513)
     network.append(new_equipment)
-    new_equipment = Equipment("Dang2", 12509)
+    new_equipment = Equipment("Dang2", 12512)
     network.append(new_equipment)
 
     # User input to do a command
@@ -54,6 +54,8 @@ def main():
         y.start()
         y.join()
 
+
+main()
 
 """
 Problèmes:
