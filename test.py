@@ -20,13 +20,14 @@ def test():
     _port = randint(10000,12500)
     Equipments = []
     A = Equipment('A', _port)
-    B = Equipment('B', _port+1)
+    B = Equipment('B', _port + 1)
     C = Equipment('C', _port + 2)
     D = Equipment('D', _port + 3)
     E = Equipment('E', _port + 4)
-    Equipments = [A,B,C,D,E]
+    Equipments = [A, B, C, D, E]
     A.connect_to_equipment(B)
-    C.connect_to_equipment(B)
+    B.connect_to_equipment(C)
+    C.connect_to_equipment(A)
     E.connect_to_equipment(D)
     D.connect_to_equipment(B)
 
@@ -35,12 +36,18 @@ def test():
     for x in Equipments:
         x.affichage_da()
 
+
     path, cert_chain1 = find_chain('A','C',C.da)
-    verify_chain(A.pub_key(), cert_chain1)
+    C.synchronize_to_equipment(A)
 
-    path, cert_chain2 = find_chain('E','B',B.da)
-    verify_chain(E.pub_key(), cert_chain2)
+    print(find_chain('C','D',D.da)[0])
+    print(find_chain('D', 'C', C.da)[0])
+    C.synchronize_to_equipment(D)
+    D.synchronize_to_equipment(C)
 
+    D.synchronize_to_equipment(C)
+
+    C.synchronize_to_equipment(D)
     #key = cert_chain[0].x509.public_key()
 
     #print(certB.verif_certif(B.pub_key()))
