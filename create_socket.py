@@ -203,7 +203,7 @@ def sync_da_server(socket_client, equipment_server):
     DA = pem_dictionary_to_dictionary(DA)
 
     # Synchronisation du DA
-    equipment_server.synchronize_da(CA, DA, verbose=False)
+    equipment_server.synchronize_da(CA, DA, verbose=True)
 
 
 # Comportement du client lors de la synchronisation des DA

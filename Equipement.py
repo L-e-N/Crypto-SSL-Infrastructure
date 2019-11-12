@@ -116,11 +116,18 @@ class Equipment:
             print(ca)
             print(da)
         # add the (keys,values) from da and ca that are NOT in self.da
-        #self.da = dict(dict(dict(da, **ca), **self.ca), **self.da)
+        self.da = dict(dict(dict(da, **ca), **self.ca), **self.da)
         self.da = dict(self.ca, **self.da)
         self.da = dict(ca, **self.da)
         self.da = dict(da, **self.da)
-
+        out = self.da
+        for key, value in self.da.items():
+            for dic in [self.ca, ca, da]:
+                    value2 = dic.get(key, False)
+                    if value2 :
+                        for key2 in value2.keys():
+                            out[key][key2] = value2[key2]
+        self.da=out
         # for sda in self.da:
         #    # for each key of self.DA, add all the (key,value) of equipment.CA[key] and DA[key] that are not in self.DA[key]
         #    self.da[sda] = dict(dict(da.get(sda, {}), **ca.get(sda, {})), **self.da[sda])
