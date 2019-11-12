@@ -36,7 +36,7 @@ def test():
     for x in Equipments:
         x.affichage_da()
 
-    #path, cert_chain = find_chain('A','C', C.da)
+    #cert_chain = find_chain('A','C', C.da)
     #print(verify_chain(A.pub_key(),cert_chain))
 
     C.synchronize_to_equipment(A)

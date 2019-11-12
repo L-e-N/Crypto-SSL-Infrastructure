@@ -276,7 +276,7 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
     server_name = equipment_server.name
     try:
         print("Searching chain from ", server_name, " to ", equipment_client.name, " in ", equipment_client.da)
-        path, cert_chain = find_chain(server_name, equipment_client.name, equipment_client.da)
+        cert_chain = find_chain(server_name, equipment_client.name, equipment_client.da)
     except ValueError:
         print('Error in find_chain from ', equipment_client.name, ' to ', server_name)
     if cert_chain == [] or not cert_chain:
