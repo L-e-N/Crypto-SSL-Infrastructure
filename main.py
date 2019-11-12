@@ -44,7 +44,7 @@ def main():
         elif command == 'sync equipment':
             syncing_equipment, synced_equipment = cli_select_two_equipments(network, "Select the equipement to to synchronize", "Select the equipement to be synchronized to")
             # TODO: replace the method with the new one to synchronize
-            syncing_equipment.connect_to_equipment(synced_equipment)
+            syncing_equipment.synchronize_to_equipment(synced_equipment)
 
         time.sleep(1)  # Sleep before the next command
 
