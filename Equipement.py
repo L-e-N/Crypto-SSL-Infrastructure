@@ -51,7 +51,7 @@ class Equipment:
         ca = []
         for key in self.ca.keys():
             ca.append(key)
-        
+
         print("Printing the CA of ", self.name, " : ",ca)
 
     def affichage(self):
@@ -107,7 +107,7 @@ class Equipment:
         self.da = dict(ca, **self.da)
         self.da = dict(da, **self.da)
 
-        #for sda in self.da:
+        # for sda in self.da:
         #    # for each key of self.DA, add all the (key,value) of equipment.CA[key] and DA[key] that are not in self.DA[key]
         #    self.da[sda] = dict(dict(da.get(sda, {}), **ca.get(sda, {})), **self.da[sda])
         if verbose:
