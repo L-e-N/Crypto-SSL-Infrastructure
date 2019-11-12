@@ -92,6 +92,7 @@ def cli_select_equipment(network, msg):
         if equipment.name == answers['selected_equipment_name']:
             return equipment
 
+
 def cli_select_two_equipments(network, msg1, msg2):
     equipment1 = cli_select_equipment(network, msg1)
     temp_network = network.copy()  # Can't select the already selected one
@@ -99,7 +100,8 @@ def cli_select_two_equipments(network, msg1, msg2):
     equipment2 = cli_select_equipment(temp_network, msg2)
     return equipment1, equipment2
 
-def cli_validate(msg):
+
+'''def cli_validate(msg):
     questions = [
         {
             'type': 'confirm',
@@ -107,4 +109,8 @@ def cli_validate(msg):
             'message': msg
          },
         ]
-    return prompt(questions)['confirm']
+    return prompt(questions)['confirm']'''
+
+
+def cli_validate(msg):
+    return True

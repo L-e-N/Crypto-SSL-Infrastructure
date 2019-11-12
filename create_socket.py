@@ -66,19 +66,20 @@ def open_socket_server(equipment_server, hote):
             print("%s: Insertion de %s réussie" % (server_name, client_name))
 
         if mode_recu.startswith("Chain proof"):
-            # TODO: Vérification de la chaine de certificat reçu avant d'échanger les clés, les certifs et mettre à jour les DA
-
-            # 1: Envoi du nom du serveur
-            socket_client.send(server_name.encode())
-
-            # 2: Reception chaine de certificat
+            # 1: Reception chaine de certificat
             cert_chain_pem = pickle.loads(socket_client.recv(16384))
             cert_chain = [Certificat(recv_pem_cert) for recv_pem_cert in cert_chain_pem]
+
+            # 2: Envoie de la vérification de la chaine pour continuer ou end
             try:
                 verify_chain(equipment_server.pub_key(), cert_chain)
-                print("ok")
+                socket_client.send("continue".encode())
+                print("Chain is verified by the server")
             except ValueError:
                 print("Could not verify chain from ", equipment_server.name, ' to ', client_name)
+                socket_client.send("end".encode())
+                socket_client.close()
+                continue
 
             # ETAPE: Echange des clefs et des certificats
             if not echange_cle_cert_server(socket_client, equipment_server, server_name, client_name):
@@ -290,11 +291,15 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
         mode = mode.encode()
         socket_client.send(mode)
 
-        # 1: Réception du nom du serveur
-        server_name = socket_client.recv(4096).decode()
-        # 2: Envoi de la chaine de certificat
+        # 1: Envoi de la chaine de certificat
         cert_chain = [serialize_cert_to_pem(cert) for cert in cert_chain]
         socket_client.send(pickle.dumps(cert_chain))
+
+        # 2: Réception du de la validation de la chaine de certification
+        server_validation = socket_client.recv(4096).decode()
+        if server_validation == "end":
+            socket_client.close()
+            return
 
         # Echange des clefs et des certificats
         if not echange_cle_cert_client(socket_client, equipment_client, client_name, server_name):
@@ -303,7 +308,7 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
         # Synchronisation des DA
         sync_da_client(socket_client, equipment_client)
 
-        print("%s: Insertion dans le réseau de %s réussie" % (client_name, server_name))
+        print("%s: Synchronisation avec %s réussie" % (client_name, server_name))
         print("%s: Fermeture de la connexion entre %s et %s" % (client_name, client_name, server_name))
         socket_client.close()
 

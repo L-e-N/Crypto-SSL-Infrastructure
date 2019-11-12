@@ -12,10 +12,14 @@ def main():
     network = []
 
     # Already create an equipement for test
-    new_equipment = Equipment("Dang", 12513)
-    network.append(new_equipment)
-    new_equipment = Equipment("Dang2", 12512)
-    network.append(new_equipment)
+    new_equipment1 = Equipment("Dang", 12513)
+    network.append(new_equipment1)
+    new_equipment2 = Equipment("Dang2", 12512)
+    network.append(new_equipment2)
+    new_equipment3 = Equipment("Dang3", 12514)
+    network.append(new_equipment3)
+    new_equipment1.connect_to_equipment(new_equipment2)
+    new_equipment3.connect_to_equipment(new_equipment2)
 
     # User input to do a command
     command = ""
@@ -42,8 +46,7 @@ def main():
             added_equipment.connect_to_equipment(host_equipment)
 
         elif command == 'sync equipment':
-            syncing_equipment, synced_equipment = cli_select_two_equipments(network, "Select the equipement to to synchronize", "Select the equipement to be synchronized to")
-            # TODO: replace the method with the new one to synchronize
+            syncing_equipment, synced_equipment = cli_select_two_equipments(network, "Select the equipement to synchronize", "Select the equipement to be synchronized to")
             syncing_equipment.synchronize_to_equipment(synced_equipment)
 
         time.sleep(1)  # Sleep before the next command
