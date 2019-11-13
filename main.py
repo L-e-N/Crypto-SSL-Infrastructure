@@ -10,7 +10,7 @@ def main():
 
     # List of equipments in the network and graph to display it with nodes and edges
     network = []
-    default_port= 12500
+    default_port = 12500
 
     # Already create an equipement for test
     new_equipment1 = Equipment("Dang", default_port)
@@ -23,7 +23,9 @@ def main():
     network.append(new_equipment3)
     default_port += 1
     new_equipment1.connect_to_equipment(new_equipment2)
+    time.sleep(1)
     new_equipment3.connect_to_equipment(new_equipment2)
+    time.sleep(1)
 
     # User input to do a command
     command = ""
@@ -32,7 +34,7 @@ def main():
         command = cli_command(network)
         print(command)
         if command == 'create equipment':
-            equipement_id, port = cli_create_equipment()
+            equipement_id = cli_create_equipment()
             new_equipment = Equipment(equipement_id, default_port)
             default_port += 1
             network.append(new_equipment)

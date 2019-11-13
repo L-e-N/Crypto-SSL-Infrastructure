@@ -1,6 +1,5 @@
 from PyInquirer import prompt
 
-
 def cli_command(network):
     choices = [
             {
@@ -101,7 +100,7 @@ def cli_select_two_equipments(network, msg1, msg2):
     return equipment1, equipment2
 
 
-'''def cli_validate(msg):
+def cli_validate(msg):
     questions = [
         {
             'type': 'confirm',
@@ -109,8 +108,5 @@ def cli_select_two_equipments(network, msg1, msg2):
             'message': msg
          },
         ]
-    return prompt(questions)['confirm']'''
+    return prompt(questions)['confirm']
 
-
-def cli_validate(msg):
-    return True
