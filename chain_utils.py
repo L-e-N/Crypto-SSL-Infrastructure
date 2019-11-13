@@ -28,6 +28,5 @@ def verify_chain(start_pub_key, cert_chain):
         except:
             print("Chain certification error, breaking at step ", start_pub_key)
             return False
-    #print("The chain has been verified")
     return True
 

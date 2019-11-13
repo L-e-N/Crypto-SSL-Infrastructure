@@ -66,7 +66,7 @@ def open_socket_server(equipment_server, hote):
             print("%s: Insertion of %s complete" % (server_name, client_name))
 
         if mode_recu.startswith("Chain proof"):
-            # 1: Reception chaine de certificat
+            # 1: Reception la chaine de certificat
             cert_chain_pem = pickle.loads(socket_client.recv(16384))
             cert_chain = []
             for cert in cert_chain :
@@ -275,6 +275,8 @@ def open_socket_client(equipment_client, hote, equipment_server):
 def synchronize_socket_client(equipment_client, hote, equipment_server):
     client_name = equipment_client.name
     server_name = equipment_server.name
+
+    # Recherche de la chaine de certification à envoyer au serveur pour prouver qu'on est dans son réseau
     try:
         print("{client} is searching a chain from {server} to {client} in his DA".format(client=client_name, server=server_name))
         cert_chain = find_chain(server_name, equipment_client.name, equipment_client.da)
@@ -282,39 +284,39 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
         print(client_name, 'Error in find_chain from ', equipment_client.name, ' to ', server_name)
     if cert_chain == [] or not cert_chain:
         print("%s didn't find a chain from %s to %s, cancelling the synchronisation attempt with %s" % (client_name, server_name, client_name, server_name))
-    else:
+        return
+    print("{client} found a chain from {server} to {client} in his DA".format(client=client_name, server=server_name))
 
-        print("{client} found a chain from {server} to {client} in his DA".format(client=client_name, server=server_name))
-        # Connexion du socket client avec le socket du serveur par son port
-        socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        socket_client.connect((hote, equipment_server.port))
-        print("Connection of %s with %s" % (client_name, server_name))
+    # Connexion du socket client avec le socket du serveur par son port
+    socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    socket_client.connect((hote, equipment_server.port))
+    print("Connection of %s with %s" % (client_name, server_name))
 
-        # 0: Envoi du mode de fonctionnement au serveur
-        mode = "Chain proof from " + equipment_client.name
-        mode = mode.encode()
-        socket_client.send(mode)
+    # 0: Envoi du mode de fonctionnement au serveur
+    mode = "Chain proof from " + equipment_client.name
+    mode = mode.encode()
+    socket_client.send(mode)
 
-        # 1: Envoi de la chaine de certificat
-        cert_chain = [serialize_cert_to_pem(cert) for cert in cert_chain]
-        socket_client.send(pickle.dumps(cert_chain))
+    # 1: Envoi de la chaine de certificat
+    cert_chain = [serialize_cert_to_pem(cert) for cert in cert_chain]
+    socket_client.send(pickle.dumps(cert_chain))
 
-        # 2: Réception du de la validation de la chaine de certification
-        server_validation = socket_client.recv(4096).decode()
-        if server_validation == "end":
-            socket_client.close()
-            return
-
-        # Echange des clefs et des certificats
-        if not echange_cle_cert_client(socket_client, equipment_client, client_name, server_name):
-            return
-
-        # Synchronisation des DA
-        sync_da_client(socket_client, equipment_client)
-
-        print("%s: Synchronization with %s complete" % (client_name, server_name))
-        print("%s: Closing connection between %s and %s" % (client_name, client_name, server_name))
+    # 2: Réception du de la validation de la chaine de certification
+    server_validation = socket_client.recv(4096).decode()
+    if server_validation == "end":
         socket_client.close()
+        return
+
+    # Echange des clefs et des certificats
+    if not echange_cle_cert_client(socket_client, equipment_client, client_name, server_name):
+        return
+
+    # Synchronisation des DA
+    sync_da_client(socket_client, equipment_client)
+
+    print("%s: Synchronization with %s complete" % (client_name, server_name))
+    print("%s: Closing connection between %s and %s" % (client_name, client_name, server_name))
+    socket_client.close()
 
 
 # Open a socket connection and connect to an equipement server to close it
