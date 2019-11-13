@@ -10,6 +10,7 @@ def main():
 
     # List of equipments in the network and graph to display it with nodes and edges
     network = []
+    default_port= 12500
 
     # Already create an equipement for test
     new_equipment1 = Equipment("Dang", 12513)
@@ -29,12 +30,14 @@ def main():
         print(command)
         if command == 'create equipment':
             equipement_id, port = cli_create_equipment()
-            new_equipment = Equipment(equipement_id, port)
+            new_equipment = Equipment(equipement_id, default_port)
+            default_port += 1
             network.append(new_equipment)
             print('New equipement %s was created' % equipement_id)
 
         elif command == 'show network':
-            print(network)
+            for equipement in network:
+                print(equipement)
 
         elif command == 'show detail':
             selected_equipment = cli_select_equipment(network, "Select the equipment to detail")

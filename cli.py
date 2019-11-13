@@ -59,12 +59,12 @@ def cli_create_equipment():
             'name': 'id',
             'message': 'ID of the new equipment?'
         },
-        {
-            'type': 'input',
-            'name': 'port',
-            'message': 'port of the new equipment?'
-        },
     ]
+    '''{
+        'type': 'input',
+        'name': 'port',
+        'message': 'port of the new equipment?'
+    },'''
     answers = prompt(questions)
     equipment_id, port = answers['id'], int(answers['port'])
     return equipment_id, port

@@ -33,29 +33,36 @@ class Equipment:
         self.da = {}
 
     def __str__(self):
-        return "(ID: %s, port: %d)" % (self.name, self.port)
+        s = '''
+            ID: {name}, port: {port}
+            {ca}
+            {da}'''.format(name=self.name, port=self.port, ca=self.affichage_ca(), da=self.affichage_da())
+        return s
 
     def __repr__(self):
         return self.__str__()
 
     def affichage_da(self):
-        da = []
+        da = "["
         for key, value in self.da.items():
             # da.append(key)
             for key2, value2 in value.items():
                 # da.append(key2)
                 str = value2.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value + "->" + \
                       value2.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
-                da.append(str)
-        print("Printing the DA of ", self.name, " : ", da)
+                da += str + ", "
+        da = da[:-2] + "]"
+        s = "DA of {name}: {da}".format(name=self.name, da=da)
+        return s
 
     def affichage_ca(self):
-        ca = []
+        ca = "["
         for key, value in self.ca.items():
             for key2 in value.keys():
-                ca.append(key2)
-
-        print("Printing the CA of ", self.name, " : ",ca)
+                ca += key2 + ", "
+        ca = ca[:-2] + "]"
+        s = "CA of {name}: {ca}".format(name=self.name, ca=ca)
+        return s
 
     def affichage(self):
         print("Equipment name: ", self.name, "Equipment port :", self.port)

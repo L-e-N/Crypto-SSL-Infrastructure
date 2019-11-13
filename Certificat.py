@@ -12,6 +12,17 @@ class Certificat:
             self.x509 = x509.load_pem_x509_certificate(pem, default_backend())
         else:
             self.x509 = None
+
+    def __str__(self):
+        issuer = self.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        subject = self.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
+        s = '''
+            issuer: {issuer}, subject: {subject}
+            '''.format(issuer=issuer, subject=subject)
+        return s
+
+    def __repr__(self):
+        return self.__str__()
     
     def create_cert(self, client_name, server_name, pub_key, pri_key, validity_days=10):
 
