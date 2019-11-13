@@ -123,7 +123,6 @@ class Equipment:
             print(ca)
             print(da)
         # add the (keys,values) from da and ca that are NOT in self.da
-        self.da = dict(dict(dict(da, **ca), **self.ca), **self.da)
         self.da = dict(self.ca, **self.da)
         self.da = dict(ca, **self.da)
         self.da = dict(da, **self.da)

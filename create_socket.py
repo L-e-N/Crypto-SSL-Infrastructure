@@ -30,18 +30,18 @@ def open_socket_server(equipment_server, hote):
     socket_server.bind((hote, equipment_server.port))
     socket_server.listen(5) # 5 The backlog argument specifies the maximum number of queued connections
 
-    print("%s écoute à présent sur le port %s" % (server_name, equipment_server.port))
+    print("%s now listens on port %s" % (server_name, equipment_server.port))
 
     mode_recu = ""
     while mode_recu != "end":
         # Attente de connexion du socket serveur
-        print("%s est en attente de connexion" % server_name)
+        print("%s is awaiting a connection" % server_name)
         socket_client, infos_connexion = socket_server.accept()
 
         # 0: Reception d'une connexion et d'un mode de fonctionnement
         mode_recu = socket_client.recv(1024).decode()
         client_name = mode_recu.split()[-1]
-        print("%s a reçu une connexion avec le mode [%s]" % (server_name, mode_recu))
+        print("%s received a connection with the mode [%s]" % (server_name, mode_recu))
 
         # Début du fonctionnement du serveur pour une insertion d'équipement
         if mode_recu.startswith("Certificate exchange"):
@@ -63,7 +63,7 @@ def open_socket_server(equipment_server, hote):
             # ETAPE: Synchronisation des DA
             sync_da_server(socket_client, equipment_server)
 
-            print("%s: Insertion de %s réussie" % (server_name, client_name))
+            print("%s: Insertion of %s complete" % (server_name, client_name))
 
         if mode_recu.startswith("Chain proof"):
             # 1: Reception chaine de certificat
@@ -90,12 +90,12 @@ def open_socket_server(equipment_server, hote):
             # ETAPE: Synchronisation des DA
             sync_da_server(socket_client, equipment_server)
 
-            print("%s: Synchronisation avec %s réussie" % (server_name, client_name))
+            print("%s: Synchronization with %s complete" % (server_name, client_name))
 
-        print("%s: Fermeture de la connexion entre %s et %s" % (server_name, client_name, server_name))
+        print("%s: Closing connection between %s and %s" % (server_name, client_name, server_name))
         socket_client.close()
 
-    print("Fermeture de la connexion server de l'équipement :%s" % server_name)
+    print("Closing server connection of the equipment :%s" % server_name)
     socket_server.close()
 
 
@@ -203,7 +203,7 @@ def sync_da_server(socket_client, equipment_server):
     DA = pem_dictionary_to_dictionary(DA)
 
     # Synchronisation du DA
-    equipment_server.synchronize_da(CA, DA, verbose=True)
+    equipment_server.synchronize_da(CA, DA, verbose=False)
 
 
 # Comportement du client lors de la synchronisation des DA
@@ -266,8 +266,8 @@ def open_socket_client(equipment_client, hote, equipment_server):
     # Synchronisation des DA
     sync_da_client(socket_client, equipment_client)
 
-    print("%s: Insertion dans le réseau de %s réussie" % (client_name, server_name))
-    print("%s: Fermeture de la connexion entre %s et %s" % (client_name, client_name, server_name))
+    print("%s: Insertion in the network of %s complete" % (client_name, server_name))
+    print("%s: Closing connection between %s and %s" % (client_name, client_name, server_name))
     socket_client.close()
 
 
@@ -280,13 +280,13 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
     except ValueError:
         print('Error in find_chain from ', equipment_client.name, ' to ', server_name)
     if cert_chain == [] or not cert_chain:
-        print("Pas de chaine, fermeture de la connexion entre %s et %s" % (client_name, server_name))
+        print("No chain, closing connection between %s and %s" % (client_name, server_name))
     else:
 
         # Connexion du socket client avec le socket du serveur par son port
         socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket_client.connect((hote, equipment_server.port))
-        print("Connexion de %s avec %s" % (client_name, server_name))
+        print("Connection of %s with %s" % (client_name, server_name))
 
         # 0: Envoi du mode de fonctionnement au serveur
         mode = "Chain proof from " + equipment_client.name
@@ -310,8 +310,8 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
         # Synchronisation des DA
         sync_da_client(socket_client, equipment_client)
 
-        print("%s: Synchronisation avec %s réussie" % (client_name, server_name))
-        print("%s: Fermeture de la connexion entre %s et %s" % (client_name, client_name, server_name))
+        print("%s: Synchronization with %s complete" % (client_name, server_name))
+        print("%s: Closing connection between %s and %s" % (client_name, client_name, server_name))
         socket_client.close()
 
 
