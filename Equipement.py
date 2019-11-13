@@ -53,6 +53,7 @@ class Equipment:
                 da += str + ", "
         da = da[:-2] + "]"
         s = "DA of {name}: {da}".format(name=self.name, da=da)
+        if len(da)<=1 : s ="Empty DA"
         return s
 
     def affichage_ca(self):
@@ -62,6 +63,7 @@ class Equipment:
                 ca += key2 + ", "
         ca = ca[:-2] + "]"
         s = "CA of {name}: {ca}".format(name=self.name, ca=ca)
+        if len(ca)<=1 : s ="Empty CA"
         return s
 
     def affichage(self):
