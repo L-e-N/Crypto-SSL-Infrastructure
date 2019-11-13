@@ -13,12 +13,15 @@ def main():
     default_port= 12500
 
     # Already create an equipement for test
-    new_equipment1 = Equipment("Dang", 12513)
+    new_equipment1 = Equipment("Dang", default_port)
+    default_port += 1
     network.append(new_equipment1)
-    new_equipment2 = Equipment("Dang2", 12512)
+    new_equipment2 = Equipment("Dang2", default_port)
     network.append(new_equipment2)
-    new_equipment3 = Equipment("Dang3", 12514)
+    default_port += 1
+    new_equipment3 = Equipment("Dang3", default_port)
     network.append(new_equipment3)
+    default_port += 1
     new_equipment1.connect_to_equipment(new_equipment2)
     new_equipment3.connect_to_equipment(new_equipment2)
 
@@ -41,8 +44,7 @@ def main():
 
         elif command == 'show detail':
             selected_equipment = cli_select_equipment(network, "Select the equipment to detail")
-            selected_equipment.affichage_ca()
-            selected_equipment.affichage_da()
+            print(selected_equipment)
 
         elif command == 'insert equipment':
             added_equipment, host_equipment = cli_select_two_equipments(network, "Select the equipement to insert", "Select the equipement to be added to")

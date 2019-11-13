@@ -20,7 +20,7 @@ def cli_command(network):
         choices.insert(
             -1,
             {
-                'name': 'Show equipement detail',
+                'name': 'Show equipment detail',
                 'value': 'show detail'
             },
         )
@@ -28,7 +28,7 @@ def cli_command(network):
         choices.insert(
             -1,
             {
-                'name': 'Insert an equipement',
+                'name': 'Insert an equipment',
                 'value': 'insert equipment'
             },
         )
@@ -66,8 +66,8 @@ def cli_create_equipment():
         'message': 'port of the new equipment?'
     },'''
     answers = prompt(questions)
-    equipment_id, port = answers['id'], int(answers['port'])
-    return equipment_id, port
+    equipment_id = answers['id']
+    return equipment_id
 
 
 def cli_select_equipment(network, msg):

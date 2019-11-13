@@ -76,9 +76,10 @@ def open_socket_server(equipment_server, hote):
             try:
                 verify_chain(equipment_server.pub_key(), cert_chain)
                 socket_client.send("continue".encode())
-                print("Chain is verified by the server")
+                print("{server} verified the chain given by {client}".format(server=server_name, client=client_name))
             except ValueError:
-                print("Could not verify chain from ", equipment_server.name, ' to ', client_name)
+                print("{server} could not verify the chain given by {client}".format(server=server_name, client=client_name))
+                print("%s: Closing connection between %s and %s" % (server_name, client_name, server_name))
                 socket_client.send("end".encode())
                 socket_client.close()
                 continue
@@ -275,14 +276,15 @@ def synchronize_socket_client(equipment_client, hote, equipment_server):
     client_name = equipment_client.name
     server_name = equipment_server.name
     try:
-        print("Searching chain from ", server_name, " to ", equipment_client.name, " in ", equipment_client.da)
+        print("{client} is searching a chain from {server} to {client} in his DA".format(client=client_name, server=server_name))
         cert_chain = find_chain(server_name, equipment_client.name, equipment_client.da)
     except ValueError:
-        print('Error in find_chain from ', equipment_client.name, ' to ', server_name)
+        print(client_name, 'Error in find_chain from ', equipment_client.name, ' to ', server_name)
     if cert_chain == [] or not cert_chain:
-        print("No chain, closing connection between %s and %s" % (client_name, server_name))
+        print("%s didn't find a chain from %s to %s, cancelling the synchronisation attempt with %s" % (client_name, server_name, client_name, server_name))
     else:
 
+        print("{client} found a chain from {server} to {client} in his DA".format(client=client_name, server=server_name))
         # Connexion du socket client avec le socket du serveur par son port
         socket_client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         socket_client.connect((hote, equipment_server.port))

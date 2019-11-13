@@ -16,9 +16,7 @@ class Certificat:
     def __str__(self):
         issuer = self.x509.issuer.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
         subject = self.x509.subject.get_attributes_for_oid(NameOID.COMMON_NAME)[0].value
-        s = '''
-            issuer: {issuer}, subject: {subject}
-            '''.format(issuer=issuer, subject=subject)
+        s = '''Certificate({issuer}>{subject})'''.format(issuer=issuer, subject=subject)
         return s
 
     def __repr__(self):
